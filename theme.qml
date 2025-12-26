@@ -30,13 +30,15 @@ FocusScope {
     Loader {
         id: pageLoader
         anchors.fill: parent
+        focus: true
         // Add hotReloadVersion for cache busting
         source: Qt.resolvedUrl("pages/" + currentPage + ".qml") + "?v=" + Rift.themeManager.hotReloadVersion
 
-        // Pass properties to loaded page
+        // Pass properties and focus to loaded page
         onLoaded: {
             if (item) {
                 item.debugGrid = Qt.binding(function() { return root.debugGrid })
+                item.focus = true
             }
         }
     }
