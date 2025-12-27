@@ -11,6 +11,9 @@ FocusScope {
     id: root
     focus: true
 
+    // Signal to navigate to game detail page
+    signal navigateToGame(var game)
+
     // Debug mode passed from parent theme
     property bool debugGrid: false
 
@@ -31,6 +34,17 @@ FocusScope {
         if (path.startsWith("file://")) return path
         if (path.startsWith("/")) return "file://" + path
         return path
+    }
+
+    // Helper to format date from YYYYMMDDTHHMMSS format
+    function formatReleaseDate(dateStr) {
+        if (!dateStr || dateStr.length < 8) return "-"
+        var year = dateStr.substring(0, 4)
+        var month = parseInt(dateStr.substring(4, 6), 10)
+        var day = parseInt(dateStr.substring(6, 8), 10)
+        var months = ["January", "February", "March", "April", "May", "June",
+                      "July", "August", "September", "October", "November", "December"]
+        return months[month - 1] + " " + day + ", " + year
     }
 
     // Background - blurred screenshot of selected game
@@ -159,7 +173,22 @@ FocusScope {
                     Keys.onDownPressed: moveCurrentIndexDown()
                     Keys.onReturnPressed: {
                         if (selectedGame) {
-                            Rift.launchGame(selectedGame.id)
+                            root.navigateToGame(selectedGame)
+                        }
+                    }
+
+                    // Rift input handling
+                    Connections {
+                        target: Rift
+                        enabled: gamesGrid.activeFocus
+                        function onNavigationLeft() { gamesGrid.moveCurrentIndexLeft() }
+                        function onNavigationRight() { gamesGrid.moveCurrentIndexRight() }
+                        function onNavigationUp() { gamesGrid.moveCurrentIndexUp() }
+                        function onNavigationDown() { gamesGrid.moveCurrentIndexDown() }
+                        function onInputAccept() {
+                            if (root.selectedGame) {
+                                root.navigateToGame(root.selectedGame)
+                            }
                         }
                     }
                 }
@@ -237,7 +266,7 @@ FocusScope {
                             // Release date
                             MetadataRow {
                                 label: "Released"
-                                value: selectedGame?.releaseDate ?? "-"
+                                value: formatReleaseDate(selectedGame?.releaseDate)
                             }
 
                             // Players

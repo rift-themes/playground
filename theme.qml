@@ -19,6 +19,9 @@ FocusScope {
     // Selected platform (passed to games page)
     property var selectedPlatform: null
 
+    // Selected game (passed to game detail page)
+    property var selectedGame: null
+
     // Debug mode - shows grid outlines (red=cols, blue=rows)
     // Controlled by Developer > Show Outlines setting
     property bool debugGrid: Rift.settings.developerShowOutlines
@@ -45,10 +48,27 @@ FocusScope {
                 if (item.hasOwnProperty("platform") && root.selectedPlatform) {
                     item.platform = root.selectedPlatform
                 }
+                // Pass selected game to game detail page
+                if (item.hasOwnProperty("game") && root.selectedGame) {
+                    item.game = root.selectedGame
+                }
                 // Connect navigation signal from home page
                 if (item.hasOwnProperty("navigateToGames")) {
                     item.navigateToGames.connect(function(platform) {
                         root.selectedPlatform = platform
+                        root.currentPage = "games"
+                    })
+                }
+                // Connect navigation signal from games page
+                if (item.hasOwnProperty("navigateToGame")) {
+                    item.navigateToGame.connect(function(game) {
+                        root.selectedGame = game
+                        root.currentPage = "game"
+                    })
+                }
+                // Connect goBack signal from game detail page
+                if (item.hasOwnProperty("goBack")) {
+                    item.goBack.connect(function() {
                         root.currentPage = "games"
                     })
                 }
@@ -67,11 +87,27 @@ FocusScope {
         }
     }
 
+    // Rift input handling
+    Connections {
+        target: Rift
+        function onInputBack() {
+            if (currentPage === "game") {
+                currentPage = "games"
+            } else if (currentPage === "games") {
+                currentPage = "home"
+            }
+        }
+    }
+
     // Keyboard navigation
     Keys.onPressed: function(event) {
         if (event.key === Qt.Key_Escape || event.key === Qt.Key_Backspace) {
-            // Go back to home from games
-            if (currentPage !== "home") {
+            if (currentPage === "game") {
+                // Go back to games from game detail
+                currentPage = "games"
+                event.accepted = true
+            } else if (currentPage === "games") {
+                // Go back to home from games
                 currentPage = "home"
                 event.accepted = true
             }
