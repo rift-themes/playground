@@ -14,7 +14,7 @@ FocusScope {
     property var api: null
 
     // Current view/page
-    property string currentPage: "home-test"
+    property string currentPage: "home"
 
     // Debug mode - shows grid outlines (red=cols, blue=rows)
     // Controlled by Developer > Show Outlines setting
