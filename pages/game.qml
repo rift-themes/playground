@@ -24,6 +24,7 @@ FocusScope {
     property bool achievementsModalVisible: false
     property bool loadingAchievements: false
     property string achievementsError: ""
+    property bool openModalOnLoad: false  // Flag to control if modal should open after fetch
 
     // Extract summary when detailed achievements are received
     onDetailedAchievementsChanged: {
@@ -36,8 +37,16 @@ FocusScope {
     onGameChanged: {
         if (game && game.platformId) {
             achievements = Rift.getGameAchievementsByName(game.platformId, game.name ?? "", game.md5 ?? "")
+            // Auto-fetch detailed achievements with user progress
+            if (achievements && achievements.id) {
+                detailedAchievements = []
+                achievementsSummary = null
+                Rift.fetchDetailedAchievements(achievements.id)
+            }
         } else {
             achievements = null
+            detailedAchievements = []
+            achievementsSummary = null
         }
     }
 
@@ -508,10 +517,16 @@ FocusScope {
                             console.log("View All clicked, achievements:", JSON.stringify(achievements))
                             if (achievements && achievements.id) {
                                 console.log("Fetching detailed achievements for ID:", achievements.id)
-                                root.loadingAchievements = true
-                                root.detailedAchievements = []
-                                root.achievementsError = ""
-                                Rift.fetchDetailedAchievements(achievements.id)
+                                root.openModalOnLoad = true  // Open modal when data is received
+                                // If we already have data, just open the modal
+                                if (detailedAchievements.length > 0) {
+                                    root.achievementsModalVisible = true
+                                    root.openModalOnLoad = false
+                                } else {
+                                    root.loadingAchievements = true
+                                    root.achievementsError = ""
+                                    Rift.fetchDetailedAchievements(achievements.id)
+                                }
                             } else {
                                 console.log("No achievements.id available")
                             }
@@ -550,14 +565,20 @@ FocusScope {
             root.detailedAchievements = achievementsList
             root.achievementsError = ""
             root.loadingAchievements = false
-            root.achievementsModalVisible = true
+            if (root.openModalOnLoad) {
+                root.achievementsModalVisible = true
+                root.openModalOnLoad = false
+            }
         }
         function onDetailedAchievementsError(error) {
             console.log("Failed to fetch achievements:", error)
             root.detailedAchievements = []
             root.achievementsError = error
             root.loadingAchievements = false
-            root.achievementsModalVisible = true
+            if (root.openModalOnLoad) {
+                root.achievementsModalVisible = true
+                root.openModalOnLoad = false
+            }
         }
     }
 
