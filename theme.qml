@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import Qt.labs.settings 1.0
 
 /**
  * Playground Theme
@@ -13,8 +14,17 @@ FocusScope {
     // Theme receives the API from Rift
     property var api: null
 
-    // Current view/page
+    // Current view/page - start with "home", restore in Component.onCompleted
     property string currentPage: "home"
+
+    // Settings for hot reload state persistence
+    Settings {
+        id: hotReloadSettings
+        category: "PlaygroundHotReload"
+        property string savedPage: "home"
+        property int savedPlatformId: -1
+        property int savedGameId: -1
+    }
 
     // Selected platform (passed to games page)
     property var selectedPlatform: null
@@ -81,9 +91,42 @@ FocusScope {
     Connections {
         target: Rift.themeManager
         function onHotReloadTriggered() {
+            // Save state before reload
+            hotReloadSettings.savedPage = root.currentPage
+            hotReloadSettings.savedPlatformId = root.selectedPlatform?.id ?? -1
+            hotReloadSettings.savedGameId = root.selectedGame?.id ?? -1
+
             var src = pageLoader.source
             pageLoader.source = ""
             pageLoader.source = src
+        }
+    }
+
+    // Restore state after hot reload
+    Component.onCompleted: {
+        var savedPage = hotReloadSettings.savedPage
+        console.log("Hot reload restore - savedPage:", savedPage, "platformId:", hotReloadSettings.savedPlatformId, "gameId:", hotReloadSettings.savedGameId)
+        if (savedPage && savedPage !== "home") {
+            // Restore platform if needed
+            var platformId = hotReloadSettings.savedPlatformId
+            if (platformId > 0) {
+                for (var i = 0; i < Rift.platforms.count; i++) {
+                    var p = Rift.platforms.get(i)
+                    if (p.id === platformId) {
+                        root.selectedPlatform = p
+                        break
+                    }
+                }
+            }
+            // Restore game if needed
+            var gameId = hotReloadSettings.savedGameId
+            if (gameId > 0) {
+                var game = Rift.getGame(gameId)
+                console.log("Restored game:", JSON.stringify(game))
+                root.selectedGame = game
+            }
+            // Restore page
+            root.currentPage = savedPage
         }
     }
 

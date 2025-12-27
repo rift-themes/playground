@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import QtQuick.Controls
 import Rift 1.0
 
 /**
@@ -15,6 +16,30 @@ FocusScope {
 
     // Game passed from parent
     property var game: null
+
+    // Achievements data
+    property var achievements: null
+    property var detailedAchievements: []
+    property var achievementsSummary: null
+    property bool achievementsModalVisible: false
+    property bool loadingAchievements: false
+    property string achievementsError: ""
+
+    // Extract summary when detailed achievements are received
+    onDetailedAchievementsChanged: {
+        if (detailedAchievements.length > 0 && detailedAchievements[0].isSummary) {
+            achievementsSummary = detailedAchievements[0]
+        }
+    }
+
+    // Load achievements when game changes
+    onGameChanged: {
+        if (game && game.platformId) {
+            achievements = Rift.getGameAchievementsByName(game.platformId, game.name ?? "", game.md5 ?? "")
+        } else {
+            achievements = null
+        }
+    }
 
     // Signal to go back
     signal goBack()
@@ -77,7 +102,8 @@ FocusScope {
     // Main content
     Item {
         anchors.fill: parent
-        anchors.margins: 48
+        anchors.margins: 4
+
 
         // Left column - Boxart and quick info
         Column {
@@ -143,33 +169,83 @@ FocusScope {
 
             // Play button
             Rectangle {
+                id: playButton
                 width: parent.width
                 height: 56
                 radius: 28
-                color: "#e94560"
+                color: playButtonArea.containsMouse ? "#ff5a7a" : "#e94560"
+                scale: playButtonArea.pressed ? 0.95 : 1.0
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on scale { NumberAnimation { duration: 100 } }
 
                 Text {
                     anchors.centerIn: parent
-                    text: "▶  PLAY"
+                    text: "PLAY"
                     color: "#fff"
                     font.pixelSize: 20
                     font.bold: true
                 }
 
                 MouseArea {
+                    id: playButtonArea
                     anchors.fill: parent
                     cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
                     onClicked: {
                         if (game) Rift.launchGame(game.id)
                     }
                 }
+            }
 
-                // Pulse animation when focused
-                SequentialAnimation on scale {
-                    running: root.activeFocus
-                    loops: Animation.Infinite
-                    NumberAnimation { to: 1.02; duration: 800; easing.type: Easing.InOutQuad }
-                    NumberAnimation { to: 1.0; duration: 800; easing.type: Easing.InOutQuad }
+            // Favorite button
+            Rectangle {
+                id: favoriteButton
+                width: parent.width
+                height: 48
+                radius: 24
+                color: {
+                    if (game?.favorite) {
+                        return favoriteButtonArea.containsMouse ? "#ff5a7a" : "#e94560"
+                    } else {
+                        return favoriteButtonArea.containsMouse ? "#444" : "#333"
+                    }
+                }
+                border.color: game?.favorite ? "#e94560" : (favoriteButtonArea.containsMouse ? "#777" : "#555")
+                border.width: 1
+                scale: favoriteButtonArea.pressed ? 0.95 : 1.0
+
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on scale { NumberAnimation { duration: 100 } }
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    Text {
+                        text: "♥"
+                        color: game?.favorite ? "#fff" : (favoriteButtonArea.containsMouse ? "#aaa" : "#888")
+                        font.pixelSize: 18
+                    }
+                    Text {
+                        text: game?.favorite ? "FAVORITE" : "ADD TO FAVORITES"
+                        color: game?.favorite ? "#fff" : (favoriteButtonArea.containsMouse ? "#aaa" : "#888")
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                }
+
+                MouseArea {
+                    id: favoriteButtonArea
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: {
+                        if (game) {
+                            Rift.setGameFavorite(game.id, !game.favorite)
+                            // Re-fetch game data to update the UI
+                            root.game = Rift.getGame(game.id)
+                        }
+                    }
                 }
             }
         }
@@ -182,17 +258,7 @@ FocusScope {
             anchors.verticalCenter: parent.verticalCenter
             spacing: 20
 
-            // Wheel/Logo if available
-            Image {
-                width: Math.min(parent.width * 0.7, 500)
-                height: 120
-                source: root.toFileUrl(game?.marquee ?? "")
-                fillMode: Image.PreserveAspectFit
-                visible: game?.marquee
-                asynchronous: true
-            }
-
-            // Game title (fallback if no wheel)
+            // Game title
             Text {
                 width: parent.width
                 text: game?.name ?? ""
@@ -200,7 +266,6 @@ FocusScope {
                 font.pixelSize: 48
                 font.bold: true
                 wrapMode: Text.WordWrap
-                visible: !game?.marquee
             }
 
             // Subtitle with platform
@@ -289,6 +354,172 @@ FocusScope {
                 }
             }
 
+            // Achievements section
+            Column {
+                width: parent.width
+                spacing: 12
+                visible: achievements && achievements.numAchievements > 0
+
+                // Section header
+                Text {
+                    text: "ACHIEVEMENTS"
+                    color: "#888"
+                    font.pixelSize: 12
+                    font.bold: true
+                    font.letterSpacing: 2
+                }
+
+                // Progress bar (only if we have user progress)
+                Column {
+                    width: parent.width
+                    spacing: 6
+                    visible: achievementsSummary !== null
+
+                    Row {
+                        width: parent.width
+                        Text {
+                            text: (achievementsSummary?.numEarned ?? 0) + " / " + (achievementsSummary?.numAchievements ?? 0)
+                            color: "#fff"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+                        Item { width: 8; height: 1 }
+                        Text {
+                            text: "(" + (achievementsSummary?.percentComplete ?? 0) + "%)"
+                            color: "#888"
+                            font.pixelSize: 14
+                        }
+                        Item { width: 20; height: 1 }
+                        Text {
+                            text: (achievementsSummary?.earnedPoints ?? 0) + " / " + (achievementsSummary?.totalPoints ?? 0) + " pts"
+                            color: "#FFD700"
+                            font.pixelSize: 12
+                        }
+                    }
+
+                    // Progress bar
+                    Rectangle {
+                        width: parent.width * 0.6
+                        height: 8
+                        radius: 4
+                        color: "#333"
+
+                        Rectangle {
+                            width: parent.width * ((achievementsSummary?.percentComplete ?? 0) / 100)
+                            height: parent.height
+                            radius: 4
+                            color: "#FFD700"
+
+                            Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutQuad } }
+                        }
+                    }
+                }
+
+                // Achievements info row (when no user progress yet)
+                Row {
+                    spacing: 24
+                    visible: achievementsSummary === null
+
+                    // Achievement count
+                    Row {
+                        spacing: 8
+                        Rectangle {
+                            width: 36
+                            height: 36
+                            radius: 18
+                            color: "#FFD700"
+                            Text {
+                                anchors.centerIn: parent
+                                text: achievements?.numAchievements ?? 0
+                                color: "#000"
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+                        }
+                        Column {
+                            anchors.verticalCenter: parent.verticalCenter
+                            Text {
+                                text: "Achievements"
+                                color: "#fff"
+                                font.pixelSize: 14
+                            }
+                            Text {
+                                text: (achievements?.points ?? 0) + " points"
+                                color: "#888"
+                                font.pixelSize: 11
+                            }
+                        }
+                    }
+
+                    // Leaderboards (if any)
+                    Row {
+                        spacing: 8
+                        visible: (achievements?.numLeaderboards ?? 0) > 0
+                        Rectangle {
+                            width: 36
+                            height: 36
+                            radius: 18
+                            color: "#4FC3F7"
+                            Text {
+                                anchors.centerIn: parent
+                                text: achievements?.numLeaderboards ?? 0
+                                color: "#000"
+                                font.pixelSize: 14
+                                font.bold: true
+                            }
+                        }
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: "Leaderboards"
+                            color: "#fff"
+                            font.pixelSize: 14
+                        }
+                    }
+                }
+
+                // View All button
+                Rectangle {
+                    id: viewAllButton
+                    width: 140
+                    height: 32
+                    radius: 16
+                    color: viewAllButtonArea.containsMouse ? "#444" : "#333"
+                    border.color: viewAllButtonArea.containsMouse ? "#777" : "#555"
+                    border.width: 1
+                    scale: viewAllButtonArea.pressed ? 0.95 : 1.0
+
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on scale { NumberAnimation { duration: 100 } }
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "View All"
+                        color: viewAllButtonArea.containsMouse ? "#fff" : "#ccc"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+
+                    MouseArea {
+                        id: viewAllButtonArea
+                        anchors.fill: parent
+                        cursorShape: Qt.PointingHandCursor
+                        hoverEnabled: true
+                        onClicked: {
+                            console.log("View All clicked, achievements:", JSON.stringify(achievements))
+                            if (achievements && achievements.id) {
+                                console.log("Fetching detailed achievements for ID:", achievements.id)
+                                root.loadingAchievements = true
+                                root.detailedAchievements = []
+                                root.achievementsError = ""
+                                Rift.fetchDetailedAchievements(achievements.id)
+                            } else {
+                                console.log("No achievements.id available")
+                            }
+                        }
+                    }
+                }
+            }
+
             // Last played
             Text {
                 text: game?.lastPlayed ? "Last played: " + Qt.formatDateTime(game.lastPlayed, "MMM d, yyyy") : ""
@@ -299,48 +530,55 @@ FocusScope {
         }
     }
 
-    // Favorite badge
-    Rectangle {
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.margins: 24
-        width: 48
-        height: 48
-        radius: 24
-        color: game?.favorite ? "#e94560" : "#40000000"
-        visible: true
-
-        Text {
-            anchors.centerIn: parent
-            text: "♥"
-            color: game?.favorite ? "#fff" : "#888"
-            font.pixelSize: 24
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                if (game) {
-                    Rift.setGameFavorite(game.id, !game.favorite)
-                }
-            }
-        }
-    }
-
     // Rift input handling
     Connections {
         target: Rift
-        function onInputBack() { root.goBack() }
+        function onInputBack() {
+            if (achievementsModalVisible) {
+                achievementsModalVisible = false
+            } else {
+                root.goBack()
+            }
+        }
         function onInputAccept() {
-            if (game) Rift.launchGame(game.id)
+            if (!achievementsModalVisible && game) {
+                Rift.launchGame(game.id)
+            }
+        }
+        function onDetailedAchievementsReceived(achievementsList) {
+            console.log("Received achievements:", achievementsList.length)
+            root.detailedAchievements = achievementsList
+            root.achievementsError = ""
+            root.loadingAchievements = false
+            root.achievementsModalVisible = true
+        }
+        function onDetailedAchievementsError(error) {
+            console.log("Failed to fetch achievements:", error)
+            root.detailedAchievements = []
+            root.achievementsError = error
+            root.loadingAchievements = false
+            root.achievementsModalVisible = true
         }
     }
 
     // Keyboard handling
-    Keys.onEscapePressed: goBack()
-    Keys.onBackPressed: goBack()
-    Keys.onReturnPressed: { if (game) Rift.launchGame(game.id) }
+    Keys.onEscapePressed: {
+        if (achievementsModalVisible) {
+            achievementsModalVisible = false
+        } else {
+            goBack()
+        }
+    }
+    Keys.onBackPressed: {
+        if (achievementsModalVisible) {
+            achievementsModalVisible = false
+        } else {
+            goBack()
+        }
+    }
+    Keys.onReturnPressed: {
+        if (!achievementsModalVisible && game) Rift.launchGame(game.id)
+    }
 
     // Metadata item component
     component MetadataItem: Column {
@@ -364,6 +602,468 @@ FocusScope {
             font.bold: true
             elide: Text.ElideRight
             width: parent.width
+        }
+    }
+
+    // Loading indicator
+    Rectangle {
+        anchors.fill: parent
+        color: "#80000000"
+        visible: loadingAchievements
+
+        Text {
+            anchors.centerIn: parent
+            text: "Loading achievements..."
+            color: "#fff"
+            font.pixelSize: 18
+        }
+    }
+
+    // Achievements modal overlay
+    Rectangle {
+        id: achievementsModal
+        anchors.fill: parent
+        color: "#E0000000"
+        visible: achievementsModalVisible
+        opacity: achievementsModalVisible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+
+        MouseArea {
+            anchors.fill: parent
+            onClicked: achievementsModalVisible = false
+        }
+
+        // Modal content
+        Rectangle {
+            anchors.centerIn: parent
+            width: parent.width * 0.8
+            height: parent.height * 0.85
+            color: "#1a1a2e"
+            radius: 16
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {} // Prevent clicks from closing modal
+            }
+
+            Column {
+                anchors.fill: parent
+                anchors.margins: 24
+                spacing: 16
+
+                // Header
+                Row {
+                    width: parent.width
+                    height: 40
+                    spacing: 16
+
+                    Text {
+                        text: "ACHIEVEMENTS"
+                        color: "#fff"
+                        font.pixelSize: 24
+                        font.bold: true
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+
+                    // Progress info
+                    Row {
+                        anchors.verticalCenter: parent.verticalCenter
+                        spacing: 12
+                        visible: achievementsSummary !== null
+
+                        // Progress bar
+                        Rectangle {
+                            width: 200
+                            height: 8
+                            radius: 4
+                            color: "#333"
+                            anchors.verticalCenter: parent.verticalCenter
+
+                            Rectangle {
+                                width: parent.width * ((achievementsSummary?.percentComplete ?? 0) / 100)
+                                height: parent.height
+                                radius: 4
+                                color: "#FFD700"
+                            }
+                        }
+
+                        Text {
+                            text: (achievementsSummary?.numEarned ?? 0) + "/" + (achievementsSummary?.numAchievements ?? 0) +
+                                  " (" + (achievementsSummary?.percentComplete ?? 0) + "%)"
+                            color: "#888"
+                            font.pixelSize: 14
+                            anchors.verticalCenter: parent.verticalCenter
+                        }
+                    }
+
+                    Item { width: parent.width - 500; height: 1 }
+
+                    // Close button
+                    Rectangle {
+                        id: closeButton
+                        width: 32
+                        height: 32
+                        radius: 16
+                        color: closeButtonArea.containsMouse ? "#e94560" : "#333"
+                        anchors.verticalCenter: parent.verticalCenter
+                        scale: closeButtonArea.pressed ? 0.9 : 1.0
+
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on scale { NumberAnimation { duration: 100 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "X"
+                            color: "#fff"
+                            font.pixelSize: 14
+                            font.bold: true
+                        }
+
+                        MouseArea {
+                            id: closeButtonArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: achievementsModalVisible = false
+                        }
+                    }
+                }
+
+                // Separator
+                Rectangle {
+                    width: parent.width
+                    height: 1
+                    color: "#333"
+                }
+
+                // Login form when no API key
+                Rectangle {
+                    width: parent.width
+                    height: parent.height - 60
+                    color: "transparent"
+                    visible: achievementsError.indexOf("API key") !== -1
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 20
+                        width: 400
+
+                        // Icon
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "RetroAchievements"
+                            color: "#FFD700"
+                            font.pixelSize: 24
+                            font.bold: true
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "Sign in to view achievements"
+                            color: "#888"
+                            font.pixelSize: 14
+                        }
+
+                        // Username field
+                        Column {
+                            width: parent.width
+                            spacing: 6
+
+                            Text {
+                                text: "Username"
+                                color: "#888"
+                                font.pixelSize: 12
+                            }
+
+                            Rectangle {
+                                width: parent.width
+                                height: 44
+                                radius: 8
+                                color: "#2a2a4e"
+                                border.color: raUsernameField.activeFocus ? "#e94560" : "#444"
+                                border.width: 1
+
+                                TextInput {
+                                    id: raUsernameField
+                                    anchors.fill: parent
+                                    anchors.margins: 12
+                                    color: "#fff"
+                                    font.pixelSize: 14
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    clip: true
+
+                                    Text {
+                                        anchors.fill: parent
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: "Enter your username"
+                                        color: "#666"
+                                        font.pixelSize: 14
+                                        visible: !parent.text && !parent.activeFocus
+                                    }
+                                }
+                            }
+                        }
+
+                        // API Key field
+                        Column {
+                            width: parent.width
+                            spacing: 6
+
+                            Text {
+                                text: "API Key"
+                                color: "#888"
+                                font.pixelSize: 12
+                            }
+
+                            Rectangle {
+                                width: parent.width
+                                height: 44
+                                radius: 8
+                                color: "#2a2a4e"
+                                border.color: raApiKeyField.activeFocus ? "#e94560" : "#444"
+                                border.width: 1
+
+                                TextInput {
+                                    id: raApiKeyField
+                                    anchors.fill: parent
+                                    anchors.margins: 12
+                                    color: "#fff"
+                                    font.pixelSize: 14
+                                    verticalAlignment: TextInput.AlignVCenter
+                                    echoMode: TextInput.Password
+                                    clip: true
+
+                                    Text {
+                                        anchors.fill: parent
+                                        verticalAlignment: Text.AlignVCenter
+                                        text: "Enter your API key"
+                                        color: "#666"
+                                        font.pixelSize: 14
+                                        visible: !parent.text && !parent.activeFocus
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "Find your API key at retroachievements.org/settings"
+                                color: "#666"
+                                font.pixelSize: 11
+                            }
+                        }
+
+                        // Login button
+                        Rectangle {
+                            width: parent.width
+                            height: 48
+                            radius: 24
+                            color: (raUsernameField.text && raApiKeyField.text) ?
+                                   (loginButtonArea.containsMouse ? "#ff5a7a" : "#e94560") : "#444"
+                            scale: loginButtonArea.pressed ? 0.95 : 1.0
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on scale { NumberAnimation { duration: 100 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "Sign In"
+                                color: (raUsernameField.text && raApiKeyField.text) ? "#fff" : "#888"
+                                font.pixelSize: 16
+                                font.bold: true
+                            }
+
+                            MouseArea {
+                                id: loginButtonArea
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
+                                onClicked: {
+                                    if (raUsernameField.text && raApiKeyField.text) {
+                                        // Save credentials
+                                        Rift.retroachievementsUsername = raUsernameField.text
+                                        Rift.retroachievementsPassword = raApiKeyField.text
+
+                                        // Retry fetching achievements
+                                        root.achievementsError = ""
+                                        root.loadingAchievements = true
+                                        Rift.fetchDetailedAchievements(achievements.id)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Other error message (not API key related)
+                Rectangle {
+                    width: parent.width
+                    height: parent.height - 60
+                    color: "transparent"
+                    visible: achievementsError !== "" && achievementsError.indexOf("API key") === -1
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: 16
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: "!"
+                            color: "#e94560"
+                            font.pixelSize: 48
+                            font.bold: true
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: achievementsError
+                            color: "#888"
+                            font.pixelSize: 16
+                        }
+                    }
+                }
+
+                // Achievements grid
+                GridView {
+                    id: achievementsGrid
+                    width: parent.width
+                    height: parent.height - 60
+                    cellWidth: width / 3
+                    cellHeight: 120
+                    clip: true
+                    // Filter out the summary item
+                    model: detailedAchievements.filter(function(item) { return !item.isSummary })
+                    visible: achievementsError === ""
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    // Smooth scrolling
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
+                    }
+
+                    delegate: Item {
+                        id: achievementDelegate
+                        width: achievementsGrid.cellWidth
+                        height: achievementsGrid.cellHeight
+
+                        property bool isEarned: modelData.earned ?? false
+
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 4
+                            radius: 8
+                            color: {
+                                if (achievementArea.containsMouse) {
+                                    return isEarned ? "#2a3a2e" : "#2a2a4e"
+                                }
+                                return isEarned ? "#1a2a1e" : "transparent"
+                            }
+                            border.color: isEarned ? "#4a8" : "transparent"
+                            border.width: isEarned ? 1 : 0
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            MouseArea {
+                                id: achievementArea
+                                anchors.fill: parent
+                                hoverEnabled: true
+                            }
+
+                            Row {
+                                anchors.fill: parent
+                                anchors.margins: 8
+                                spacing: 12
+
+                                // Badge image
+                                Item {
+                                    width: 64
+                                    height: 64
+                                    anchors.verticalCenter: parent.verticalCenter
+
+                                    Image {
+                                        id: badgeImage
+                                        anchors.fill: parent
+                                        source: modelData.badgeUrl ?? ""
+                                        fillMode: Image.PreserveAspectFit
+                                        asynchronous: true
+                                        opacity: isEarned ? 1.0 : 0.5
+
+                                        // Placeholder while loading
+                                        Rectangle {
+                                            anchors.fill: parent
+                                            color: "#333"
+                                            radius: 8
+                                            visible: badgeImage.status !== Image.Ready
+                                        }
+                                    }
+
+                                    // Earned checkmark
+                                    Rectangle {
+                                        visible: isEarned
+                                        anchors.right: parent.right
+                                        anchors.bottom: parent.bottom
+                                        width: 20
+                                        height: 20
+                                        radius: 10
+                                        color: "#4a8"
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "✓"
+                                            color: "#fff"
+                                            font.pixelSize: 12
+                                            font.bold: true
+                                        }
+                                    }
+                                }
+
+                                // Achievement info
+                                Column {
+                                    width: parent.width - 76
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    spacing: 4
+
+                                    Text {
+                                        width: parent.width
+                                        text: modelData.title ?? ""
+                                        color: isEarned ? "#fff" : (achievementArea.containsMouse ? "#ccc" : "#888")
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        elide: Text.ElideRight
+                                        wrapMode: Text.WordWrap
+                                        maximumLineCount: 2
+                                    }
+
+                                    Text {
+                                        width: parent.width
+                                        text: modelData.description ?? ""
+                                        color: isEarned ? "#aaa" : (achievementArea.containsMouse ? "#888" : "#666")
+                                        font.pixelSize: 11
+                                        elide: Text.ElideRight
+                                        wrapMode: Text.WordWrap
+                                        maximumLineCount: 2
+                                    }
+
+                                    Row {
+                                        spacing: 8
+                                        Text {
+                                            text: (modelData.points ?? 0) + " pts"
+                                            color: isEarned ? "#FFD700" : "#886"
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                        }
+                                        Text {
+                                            visible: modelData.hardcore ?? false
+                                            text: "HARDCORE"
+                                            color: "#e94560"
+                                            font.pixelSize: 9
+                                            font.bold: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
