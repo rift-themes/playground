@@ -16,6 +16,9 @@ FocusScope {
     // Current view/page
     property string currentPage: "home"
 
+    // Selected platform (passed to games page)
+    property var selectedPlatform: null
+
     // Debug mode - shows grid outlines (red=cols, blue=rows)
     // Controlled by Developer > Show Outlines setting
     property bool debugGrid: Rift.settings.developerShowOutlines
@@ -38,6 +41,17 @@ FocusScope {
         onLoaded: {
             if (item) {
                 item.debugGrid = Qt.binding(function() { return root.debugGrid })
+                // Pass selected platform to games page
+                if (item.hasOwnProperty("platform") && root.selectedPlatform) {
+                    item.platform = root.selectedPlatform
+                }
+                // Connect navigation signal from home page
+                if (item.hasOwnProperty("navigateToGames")) {
+                    item.navigateToGames.connect(function(platform) {
+                        root.selectedPlatform = platform
+                        root.currentPage = "games"
+                    })
+                }
                 item.focus = true
             }
         }
@@ -55,9 +69,12 @@ FocusScope {
 
     // Keyboard navigation
     Keys.onPressed: function(event) {
-        if (event.key === Qt.Key_Escape) {
-            // Could switch views or exit
-            event.accepted = true
+        if (event.key === Qt.Key_Escape || event.key === Qt.Key_Backspace) {
+            // Go back to home from games
+            if (currentPage !== "home") {
+                currentPage = "home"
+                event.accepted = true
+            }
         }
     }
 }

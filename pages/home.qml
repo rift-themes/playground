@@ -10,6 +10,9 @@ FocusScope {
     id: root
     focus: true
 
+    // Signal to navigate to games page
+    signal navigateToGames(var platform)
+
     // Debug mode passed from parent theme
     property bool debugGrid: false
 
@@ -117,9 +120,11 @@ FocusScope {
                     delegateRadius: 0
                     delegateBorderWidth: 0
 
-                    // Handle activation
+                    // Handle activation - navigate to games page
                     onItemActivated: function(index) {
-                        console.log("Platform selected:", index)
+                        var platform = model.get(index)
+                        console.log("Platform selected:", platform.name)
+                        root.navigateToGames(platform)
                     }
                 }
             }
