@@ -32,6 +32,12 @@ FocusScope {
     // Selected game (passed to game detail page)
     property var selectedGame: null
 
+    // Last selected platform index for carousel restoration
+    property int lastPlatformIndex: 0
+
+    // Last selected game index for grid restoration
+    property int lastGameIndex: 0
+
     // Debug mode - shows grid outlines (red=cols, blue=rows)
     // Controlled by Developer > Show Outlines setting
     property bool debugGrid: Rift.settings.developerShowOutlines
@@ -62,17 +68,31 @@ FocusScope {
                 if (item.hasOwnProperty("game") && root.selectedGame) {
                     item.game = root.selectedGame
                 }
+                // Pass last platform index to home page
+                if (item.hasOwnProperty("initialPlatformIndex")) {
+                    item.initialPlatformIndex = root.lastPlatformIndex
+                }
                 // Connect navigation signal from home page
                 if (item.hasOwnProperty("navigateToGames")) {
-                    item.navigateToGames.connect(function(platform) {
+                    item.navigateToGames.connect(function(platform, index) {
+                        // Reset game index if changing platform
+                        if (root.selectedPlatform?.id !== platform.id) {
+                            root.lastGameIndex = 0
+                        }
                         root.selectedPlatform = platform
+                        root.lastPlatformIndex = index
                         root.currentPage = "games"
                     })
                 }
+                // Pass last game index to games page
+                if (item.hasOwnProperty("initialGameIndex")) {
+                    item.initialGameIndex = root.lastGameIndex
+                }
                 // Connect navigation signal from games page
                 if (item.hasOwnProperty("navigateToGame")) {
-                    item.navigateToGame.connect(function(game) {
+                    item.navigateToGame.connect(function(game, index) {
                         root.selectedGame = game
+                        root.lastGameIndex = index
                         root.currentPage = "game"
                     })
                 }

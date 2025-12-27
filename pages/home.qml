@@ -10,11 +10,17 @@ FocusScope {
     id: root
     focus: true
 
-    // Signal to navigate to games page
-    signal navigateToGames(var platform)
+    // Signal to navigate to games page (includes index for restoration)
+    signal navigateToGames(var platform, int index)
 
     // Debug mode passed from parent theme
     property bool debugGrid: false
+
+    // Initial platform index (restored from theme)
+    property int initialPlatformIndex: 0
+    onInitialPlatformIndexChanged: {
+        platformCarousel.currentIndex = initialPlatformIndex
+    }
 
     // Dynamic background color
     property color bgColor: "#1a1a2e"
@@ -89,6 +95,7 @@ FocusScope {
 
                     // Model & data
                     model: Rift.platforms
+                    currentIndex: root.initialPlatformIndex
 
                     // Type & layout
                     carouselType: "horizontal"
@@ -123,8 +130,8 @@ FocusScope {
                     // Handle activation - navigate to games page
                     onItemActivated: function(index) {
                         var platform = model.get(index)
-                        console.log("Platform selected:", platform.name)
-                        root.navigateToGames(platform)
+                        console.log("Platform selected:", platform.name, "at index:", index)
+                        root.navigateToGames(platform, index)
                     }
                 }
             }

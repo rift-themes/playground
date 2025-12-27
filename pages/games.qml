@@ -11,11 +11,19 @@ FocusScope {
     id: root
     focus: true
 
-    // Signal to navigate to game detail page
-    signal navigateToGame(var game)
+    // Signal to navigate to game detail page (includes index for restoration)
+    signal navigateToGame(var game, int index)
 
     // Debug mode passed from parent theme
     property bool debugGrid: false
+
+    // Initial game index (restored from theme)
+    property int initialGameIndex: 0
+    onInitialGameIndexChanged: {
+        selectedIndex = initialGameIndex
+        // Position without animation
+        gamesGrid.positionViewAtIndex(initialGameIndex, GridView.Center)
+    }
 
     // Platform passed from parent (or default to first)
     property var platform: Rift.platforms.get(0)
@@ -25,7 +33,7 @@ FocusScope {
     property var gamesModel: Rift.getGamesByPlatform(platformId)
 
     // Currently selected game index
-    property int selectedIndex: 0
+    property int selectedIndex: initialGameIndex
     property var selectedGame: gamesModel && gamesModel.length > selectedIndex ? gamesModel[selectedIndex] : null
 
     // Helper to ensure file:// prefix
@@ -173,7 +181,7 @@ FocusScope {
                     Keys.onDownPressed: moveCurrentIndexDown()
                     Keys.onReturnPressed: {
                         if (selectedGame) {
-                            root.navigateToGame(selectedGame)
+                            root.navigateToGame(selectedGame, root.selectedIndex)
                         }
                     }
 
@@ -187,7 +195,7 @@ FocusScope {
                         function onNavigationDown() { gamesGrid.moveCurrentIndexDown() }
                         function onInputAccept() {
                             if (root.selectedGame) {
-                                root.navigateToGame(root.selectedGame)
+                                root.navigateToGame(root.selectedGame, root.selectedIndex)
                             }
                         }
                     }
