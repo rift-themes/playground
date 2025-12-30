@@ -47,9 +47,7 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: 48
-        backgroundColor: "#1a1a2e"
-        textColor: "#AAAAAA"
+        height: 32
     }
 
     // Search modal - platformId and navigation auto-detected
@@ -73,10 +71,5 @@ FocusScope {
                 searchModal.open()
             }
         }
-    }
-
-    // Start background artwork download on load
-    Component.onCompleted: {
-        Rift.queuePlatformGamesForArtwork(-1)
     }
 }
