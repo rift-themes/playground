@@ -26,6 +26,9 @@ FocusScope {
     property string achievementsError: ""
     property bool openModalOnLoad: false  // Flag to control if modal should open after fetch
 
+    // Similar games
+    property var similarGames: []
+
     // Extract summary when detailed achievements are received
     onDetailedAchievementsChanged: {
         if (detailedAchievements.length > 0 && detailedAchievements[0].isSummary) {
@@ -33,7 +36,7 @@ FocusScope {
         }
     }
 
-    // Load achievements when game changes
+    // Load achievements and similar games when game changes
     onGameChanged: {
         if (game && game.platformId) {
             achievements = Rift.getGameAchievementsByName(game.platformId, game.name ?? "", game.md5 ?? "")
@@ -43,10 +46,13 @@ FocusScope {
                 achievementsSummary = null
                 Rift.fetchDetailedAchievements(achievements.id)
             }
+            // Load similar games
+            similarGames = Rift.getSimilarGames(game.id, 8)
         } else {
             achievements = null
             detailedAchievements = []
             achievementsSummary = null
+            similarGames = []
         }
     }
 
@@ -119,7 +125,8 @@ FocusScope {
             id: leftColumn
             width: parent.width * 0.28
             anchors.left: parent.left
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 20
             spacing: 24
 
             // Boxart with glow effect
@@ -264,7 +271,8 @@ FocusScope {
             anchors.left: leftColumn.right
             anchors.leftMargin: 48
             anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
+            anchors.top: parent.top
+            anchors.topMargin: 20
             spacing: 20
 
             // Game title
@@ -542,6 +550,131 @@ FocusScope {
                 font.pixelSize: 13
                 visible: game?.lastPlayed
             }
+
+            // Similar Games Section
+            Column {
+                width: parent.width
+                spacing: 10
+                visible: similarGames && similarGames.length > 0
+
+                // Section title
+                Text {
+                    text: "SIMILAR GAMES"
+                    color: "#888"
+                    font.pixelSize: 12
+                    font.bold: true
+                    font.letterSpacing: 2
+                }
+
+                // RiftCarousel for similar games
+                RiftCarousel {
+                    id: similarGamesCarousel
+                    width: parent.width
+                    height: 120
+                    clip: true
+
+                    model: similarGamesModel
+                    carouselType: "horizontal"
+                    alignment: "start"
+                    startOffset: 0
+
+                    // Item sizing
+                    itemSizeX: 0.12
+                    itemSizeY: 0.9
+                    itemScale: 1.1
+                    maxItemCount: 7
+
+                    // Visual settings
+                    unfocusedItemOpacity: 0.6
+                    itemStacking: "centered"
+
+                    // Custom delegate for game cards
+                    delegate: Component {
+                        Item {
+                            property var modelData
+                            property int itemIndex
+                            property bool isSelected
+
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: 6
+                                color: isSelected ? "#333" : "#222"
+                                border.color: isSelected ? "#e94560" : "transparent"
+                                border.width: 2
+
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                // Boxart
+                                Image {
+                                    id: similarBoxart
+                                    anchors.fill: parent
+                                    anchors.margins: 3
+                                    source: root.toFileUrl(modelData?.boxart ?? "")
+                                    fillMode: Image.PreserveAspectFit
+                                    asynchronous: true
+
+                                    opacity: status === Image.Ready ? 1 : 0
+                                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                                }
+
+                                // Fallback text if no boxart
+                                Text {
+                                    anchors.centerIn: parent
+                                    anchors.margins: 6
+                                    width: parent.width - 12
+                                    text: modelData?.name ?? ""
+                                    color: "#888"
+                                    font.pixelSize: 9
+                                    wrapMode: Text.WordWrap
+                                    horizontalAlignment: Text.AlignHCenter
+                                    visible: similarBoxart.status !== Image.Ready
+                                }
+                            }
+
+                            // Game name label below (visible when selected)
+                            Rectangle {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.top: parent.bottom
+                                anchors.topMargin: 4
+                                width: Math.min(gameNameLabel.implicitWidth + 12, parent.width * 1.4)
+                                height: gameNameLabel.height + 6
+                                radius: 3
+                                color: "#CC000000"
+                                visible: isSelected
+
+                                Text {
+                                    id: gameNameLabel
+                                    anchors.centerIn: parent
+                                    text: modelData?.name ?? ""
+                                    color: "#fff"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                    elide: Text.ElideRight
+                                    width: parent.width - 6
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                            }
+                        }
+                    }
+
+                    // Navigate to selected game on activation
+                    onItemActivated: function(index) {
+                        var selectedGame = similarGamesModel.get(index)
+                        if (selectedGame) {
+                            root.game = Rift.getGame(selectedGame.id)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Similar Games Model wrapper (RiftCarousel expects count/get interface)
+    QtObject {
+        id: similarGamesModel
+        property int count: similarGames ? similarGames.length : 0
+        function get(index) {
+            return similarGames ? similarGames[index] : null
         }
     }
 
@@ -717,37 +850,6 @@ FocusScope {
                         }
                     }
 
-                    Item { width: parent.width - 500; height: 1 }
-
-                    // Close button
-                    Rectangle {
-                        id: closeButton
-                        width: 32
-                        height: 32
-                        radius: 16
-                        color: closeButtonArea.containsMouse ? "#e94560" : "#333"
-                        anchors.verticalCenter: parent.verticalCenter
-                        scale: closeButtonArea.pressed ? 0.9 : 1.0
-
-                        Behavior on color { ColorAnimation { duration: 150 } }
-                        Behavior on scale { NumberAnimation { duration: 100 } }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "X"
-                            color: "#fff"
-                            font.pixelSize: 14
-                            font.bold: true
-                        }
-
-                        MouseArea {
-                            id: closeButtonArea
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            hoverEnabled: true
-                            onClicked: achievementsModalVisible = false
-                        }
-                    }
                 }
 
                 // Separator
