@@ -12,9 +12,6 @@ FocusScope {
     id: root
     focus: true
 
-    // Debug mode passed from parent theme
-    property bool debugGrid: false
-
     // Initial game index (restored from theme)
     property int initialGameIndex: 0
     onInitialGameIndexChanged: {

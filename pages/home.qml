@@ -10,9 +10,6 @@ FocusScope {
     id: root
     focus: true
 
-    // Debug mode passed from parent theme
-    property bool debugGrid: false
-
     // Initial platform index (restored from theme)
     property int initialPlatformIndex: 0
     onInitialPlatformIndexChanged: {
@@ -61,13 +58,11 @@ FocusScope {
         RiftRow {
             id: carouselRow
             gutter: 16
-            debug: root.debugGrid
 
             RiftCol {
                 span: 12
                 fixedHeight: 300
                 autoHeight: false
-                debug: root.debugGrid
 
                 RiftCarousel {
                     id: platformCarousel
