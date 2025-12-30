@@ -1,6 +1,4 @@
 import QtQuick
-import QtQuick.Window
-import QtMultimedia
 import Rift 1.0
 
 /**

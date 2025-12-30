@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Window
 import QtQuick.Controls
 import Rift 1.0
 
@@ -10,9 +9,6 @@ import Rift 1.0
 FocusScope {
     id: root
     focus: true
-
-    // Debug mode passed from parent theme
-    property bool debugGrid: false
 
     // Game passed from parent
     property var game: null
@@ -56,30 +52,11 @@ FocusScope {
         }
     }
 
-    // Helper to ensure file:// prefix
-    function toFileUrl(path) {
-        if (!path) return ""
-        if (path.startsWith("file://")) return path
-        if (path.startsWith("/")) return "file://" + path
-        return path
-    }
-
-    // Helper to format date from YYYYMMDDTHHMMSS format
-    function formatReleaseDate(dateStr) {
-        if (!dateStr || dateStr.length < 8) return "-"
-        var year = dateStr.substring(0, 4)
-        var month = parseInt(dateStr.substring(4, 6), 10)
-        var day = parseInt(dateStr.substring(6, 8), 10)
-        var months = ["January", "February", "March", "April", "May", "June",
-                      "July", "August", "September", "October", "November", "December"]
-        return months[month - 1] + " " + day + ", " + year
-    }
-
     // Full-screen screenshot/fanart background
     Image {
         id: backgroundImage
         anchors.fill: parent
-        source: toFileUrl(game?.fanart ?? game?.screenshot ?? "")
+        source: game?.fanart ?? game?.screenshot ?? ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
 
@@ -154,7 +131,7 @@ FocusScope {
                     anchors.centerIn: parent
                     width: parent.width - 20
                     height: parent.height - 20
-                    source: root.toFileUrl(game?.boxart ?? "")
+                    source: game?.boxart ?? ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
 
@@ -314,7 +291,7 @@ FocusScope {
                 // Release Date
                 MetadataItem {
                     label: "RELEASED"
-                    value: formatReleaseDate(game?.releaseDate)
+                    value: game?.releaseDateFormatted ?? "-"
                 }
 
                 // Developer
@@ -606,7 +583,7 @@ FocusScope {
                                     id: similarBoxart
                                     anchors.fill: parent
                                     anchors.margins: 3
-                                    source: root.toFileUrl(modelData?.boxart ?? "")
+                                    source: modelData?.boxart ?? ""
                                     fillMode: Image.PreserveAspectFit
                                     asynchronous: true
 
