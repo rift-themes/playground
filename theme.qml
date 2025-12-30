@@ -19,7 +19,6 @@ FocusScope {
     RiftRouter {
         id: router
         anchors.fill: parent
-        anchors.bottomMargin: footer.height
         focus: true
     }
 
@@ -29,6 +28,7 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: 32
+        height: 38
+        backgroundOpacity: Rift.navigation?.currentPage === "home" ? 0.5 : 1.0
     }
 }

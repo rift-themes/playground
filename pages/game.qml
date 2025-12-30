@@ -89,48 +89,31 @@ FocusScope {
     }
 
     // Main content
-    Item {
-        anchors.fill: parent
-        anchors.margins: 4
+    RiftContainer {
+        fluid: true
+        paddingX: 24
+        paddingY: 24
 
+        RiftRow {
+            gutter: 48
 
-        // Left column - Boxart and quick info
-        Column {
-            id: leftColumn
-            width: parent.width * 0.28
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.topMargin: 20
-            spacing: 24
+            // Left column - Boxart and quick info (3 cols)
+            RiftCol {
+                span: 3
+                spacing: 24
 
-            // Boxart with glow effect
-            Item {
+            // Boxart + Rating stars (no spacing between them)
+            Column {
                 width: parent.width
-                height: width * 1.4
-
-                // Glow/shadow
-                Rectangle {
-                    anchors.fill: boxart
-                    anchors.margins: -8
-                    radius: 16
-                    color: "#000"
-                    opacity: 0.6
-
-                    // Blur effect simulation
-                    Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: -12
-                        radius: 20
-                        color: "#000"
-                        opacity: 0.3
-                    }
-                }
+                spacing: 8
 
                 Image {
                     id: boxart
-                    anchors.centerIn: parent
-                    width: parent.width - 20
-                    height: parent.height - 20
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    width: parent.width
+                    height: status === Image.Ready && implicitWidth > 0
+                        ? width * (implicitHeight / implicitWidth)
+                        : width * 1.4
                     source: game?.boxart ?? ""
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
@@ -139,20 +122,20 @@ FocusScope {
                     opacity: status === Image.Ready ? 1 : 0
                     Behavior on opacity { NumberAnimation { duration: 300 } }
                 }
-            }
 
-            // Rating stars
-            Row {
-                anchors.horizontalCenter: parent.horizontalCenter
-                spacing: 4
-                visible: game?.rating > 0
+                // Rating stars
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 4
+                    visible: game?.rating > 0
 
-                Repeater {
-                    model: 5
-                    Text {
-                        text: index < Math.round((game?.rating ?? 0) * 5) ? "★" : "☆"
-                        color: index < Math.round((game?.rating ?? 0) * 5) ? "#FFD700" : "#555"
-                        font.pixelSize: 28
+                    Repeater {
+                        model: 5
+                        Text {
+                            text: index < Math.round((game?.rating ?? 0) * 5) ? "★" : "☆"
+                            color: index < Math.round((game?.rating ?? 0) * 5) ? "#FFD700" : "#555"
+                            font.pixelSize: 28
+                        }
                     }
                 }
             }
@@ -238,18 +221,65 @@ FocusScope {
                     }
                 }
             }
-        }
 
-        // Right column - All metadata
-        Column {
-            anchors.left: leftColumn.right
-            anchors.leftMargin: 48
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.topMargin: 20
-            spacing: 20
+            // View Achievements button
+            Rectangle {
+                id: viewAchievementsButton
+                width: parent.width
+                height: 48
+                radius: 24
+                color: viewAchievementsArea.containsMouse ? "#444" : "#333"
+                border.color: viewAchievementsArea.containsMouse ? "#FFD700" : "#555"
+                border.width: 1
+                scale: viewAchievementsArea.pressed ? 0.95 : 1.0
+                visible: achievements && achievements.numAchievements > 0
 
-            // Game title
+                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on scale { NumberAnimation { duration: 100 } }
+
+                Row {
+                    anchors.centerIn: parent
+                    spacing: 8
+                    Text {
+                        text: "🏆"
+                        font.pixelSize: 16
+                    }
+                    Text {
+                        text: "ACHIEVEMENTS"
+                        color: viewAchievementsArea.containsMouse ? "#FFD700" : "#888"
+                        font.pixelSize: 14
+                        font.bold: true
+                    }
+                }
+
+                MouseArea {
+                    id: viewAchievementsArea
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: {
+                        if (achievements && achievements.id) {
+                            root.openModalOnLoad = true
+                            if (detailedAchievements.length > 0) {
+                                root.achievementsModalVisible = true
+                                root.openModalOnLoad = false
+                            } else {
+                                root.loadingAchievements = true
+                                root.achievementsError = ""
+                                Rift.fetchDetailedAchievements(achievements.id)
+                            }
+                        }
+                    }
+                }
+            }
+            }
+
+            // Right column - All metadata (9 cols)
+            RiftCol {
+                span: 9
+                spacing: 20
+
+            // Game title (hidden if boxart is available)
             Text {
                 width: parent.width
                 text: game?.name ?? ""
@@ -257,28 +287,31 @@ FocusScope {
                 font.pixelSize: 48
                 font.bold: true
                 wrapMode: Text.WordWrap
+                visible: !game?.boxart
             }
 
-            // Subtitle with platform
+            // Subtitle with platform (hidden if boxart is available)
             Text {
                 text: game?.platformName ?? ""
                 color: "#888"
                 font.pixelSize: 18
                 font.italic: true
+                visible: !game?.boxart
             }
 
-            // Separator line
+            // Separator line (hidden if boxart is available)
             Rectangle {
                 width: parent.width * 0.3
                 height: 3
                 radius: 1.5
                 color: "#e94560"
+                visible: !game?.boxart
             }
 
             // Metadata grid
             Grid {
-                columns: 2
-                columnSpacing: 48
+                columns: 3
+                columnSpacing: 32
                 rowSpacing: 16
                 width: parent.width
 
@@ -317,6 +350,43 @@ FocusScope {
                     label: "TIMES PLAYED"
                     value: (game?.playCount ?? 0).toString()
                 }
+
+                // Achievements (if available)
+                MetadataItem {
+                    label: "ACHIEVEMENTS"
+                    value: achievements ? (achievementsSummary
+                        ? (achievementsSummary.numEarned + " / " + achievementsSummary.numAchievements)
+                        : (achievements.numAchievements + " available"))
+                        : "-"
+                    visible: achievements && achievements.numAchievements > 0
+                }
+
+                // Achievement points
+                MetadataItem {
+                    label: "POINTS"
+                    value: achievementsSummary
+                        ? (achievementsSummary.earnedPoints + " / " + achievementsSummary.totalPoints)
+                        : (achievements?.points ?? 0).toString()
+                    visible: achievements && achievements.numAchievements > 0
+                }
+            }
+
+            // Achievements progress bar
+            Rectangle {
+                width: parent.width * 0.4
+                height: 8
+                radius: 4
+                color: "#333"
+                visible: achievementsSummary !== null
+
+                Rectangle {
+                    width: parent.width * ((achievementsSummary?.percentComplete ?? 0) / 100)
+                    height: parent.height
+                    radius: 4
+                    color: "#FFD700"
+
+                    Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutQuad } }
+                }
             }
 
             // Description
@@ -342,178 +412,6 @@ FocusScope {
                     wrapMode: Text.WordWrap
                     maximumLineCount: 6
                     elide: Text.ElideRight
-                }
-            }
-
-            // Achievements section
-            Column {
-                width: parent.width
-                spacing: 12
-                visible: achievements && achievements.numAchievements > 0
-
-                // Section header
-                Text {
-                    text: "ACHIEVEMENTS"
-                    color: "#888"
-                    font.pixelSize: 12
-                    font.bold: true
-                    font.letterSpacing: 2
-                }
-
-                // Progress bar (only if we have user progress)
-                Column {
-                    width: parent.width
-                    spacing: 6
-                    visible: achievementsSummary !== null
-
-                    Row {
-                        width: parent.width
-                        Text {
-                            text: (achievementsSummary?.numEarned ?? 0) + " / " + (achievementsSummary?.numAchievements ?? 0)
-                            color: "#fff"
-                            font.pixelSize: 14
-                            font.bold: true
-                        }
-                        Item { width: 8; height: 1 }
-                        Text {
-                            text: "(" + (achievementsSummary?.percentComplete ?? 0) + "%)"
-                            color: "#888"
-                            font.pixelSize: 14
-                        }
-                        Item { width: 20; height: 1 }
-                        Text {
-                            text: (achievementsSummary?.earnedPoints ?? 0) + " / " + (achievementsSummary?.totalPoints ?? 0) + " pts"
-                            color: "#FFD700"
-                            font.pixelSize: 12
-                        }
-                    }
-
-                    // Progress bar
-                    Rectangle {
-                        width: parent.width * 0.6
-                        height: 8
-                        radius: 4
-                        color: "#333"
-
-                        Rectangle {
-                            width: parent.width * ((achievementsSummary?.percentComplete ?? 0) / 100)
-                            height: parent.height
-                            radius: 4
-                            color: "#FFD700"
-
-                            Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutQuad } }
-                        }
-                    }
-                }
-
-                // Achievements info row (when no user progress yet)
-                Row {
-                    spacing: 24
-                    visible: achievementsSummary === null
-
-                    // Achievement count
-                    Row {
-                        spacing: 8
-                        Rectangle {
-                            width: 36
-                            height: 36
-                            radius: 18
-                            color: "#FFD700"
-                            Text {
-                                anchors.centerIn: parent
-                                text: achievements?.numAchievements ?? 0
-                                color: "#000"
-                                font.pixelSize: 14
-                                font.bold: true
-                            }
-                        }
-                        Column {
-                            anchors.verticalCenter: parent.verticalCenter
-                            Text {
-                                text: "Achievements"
-                                color: "#fff"
-                                font.pixelSize: 14
-                            }
-                            Text {
-                                text: (achievements?.points ?? 0) + " points"
-                                color: "#888"
-                                font.pixelSize: 11
-                            }
-                        }
-                    }
-
-                    // Leaderboards (if any)
-                    Row {
-                        spacing: 8
-                        visible: (achievements?.numLeaderboards ?? 0) > 0
-                        Rectangle {
-                            width: 36
-                            height: 36
-                            radius: 18
-                            color: "#4FC3F7"
-                            Text {
-                                anchors.centerIn: parent
-                                text: achievements?.numLeaderboards ?? 0
-                                color: "#000"
-                                font.pixelSize: 14
-                                font.bold: true
-                            }
-                        }
-                        Text {
-                            anchors.verticalCenter: parent.verticalCenter
-                            text: "Leaderboards"
-                            color: "#fff"
-                            font.pixelSize: 14
-                        }
-                    }
-                }
-
-                // View All button
-                Rectangle {
-                    id: viewAllButton
-                    width: 140
-                    height: 32
-                    radius: 16
-                    color: viewAllButtonArea.containsMouse ? "#444" : "#333"
-                    border.color: viewAllButtonArea.containsMouse ? "#777" : "#555"
-                    border.width: 1
-                    scale: viewAllButtonArea.pressed ? 0.95 : 1.0
-
-                    Behavior on color { ColorAnimation { duration: 150 } }
-                    Behavior on scale { NumberAnimation { duration: 100 } }
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "View All"
-                        color: viewAllButtonArea.containsMouse ? "#fff" : "#ccc"
-                        font.pixelSize: 12
-                        font.bold: true
-                    }
-
-                    MouseArea {
-                        id: viewAllButtonArea
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                        onClicked: {
-                            console.log("View All clicked, achievements:", JSON.stringify(achievements))
-                            if (achievements && achievements.id) {
-                                console.log("Fetching detailed achievements for ID:", achievements.id)
-                                root.openModalOnLoad = true  // Open modal when data is received
-                                // If we already have data, just open the modal
-                                if (detailedAchievements.length > 0) {
-                                    root.achievementsModalVisible = true
-                                    root.openModalOnLoad = false
-                                } else {
-                                    root.loadingAchievements = true
-                                    root.achievementsError = ""
-                                    Rift.fetchDetailedAchievements(achievements.id)
-                                }
-                            } else {
-                                console.log("No achievements.id available")
-                            }
-                        }
-                    }
                 }
             }
 
@@ -639,6 +537,7 @@ FocusScope {
                         }
                     }
                 }
+            }
             }
         }
     }
