@@ -96,10 +96,11 @@ FocusScope {
                     width: parent.width
                     height: root.height - 100
                     focus: true
-
+                    columns: 3
                     model: gamesModel
                     platform: root.platform
                     currentIndex: root.selectedIndex
+                    showCover: true
 
                     onCurrentIndexChanged: root.selectedIndex = currentIndex
                     onGameActivated: function(game, index) {
@@ -116,7 +117,7 @@ FocusScope {
                             height: gamesList.cellHeight - 8
                             game: modelData
                             isSelected: index === gamesList.currentIndex
-                            showCover: true
+                            showCover: gamesList.showCover
                         }
                     }
                 }

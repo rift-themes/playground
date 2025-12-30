@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Window
 import Rift 1.0
 
 /**
@@ -49,14 +48,11 @@ FocusScope {
 
     // Main container using the grid system
     RiftContainer {
-        id: container
         fluid: true
         paddingX: 24
         paddingY: 24
 
-        // Carousel row
         RiftRow {
-            id: carouselRow
             gutter: 16
 
             RiftCol {
@@ -112,10 +108,5 @@ FocusScope {
                 }
             }
         }
-    }
-
-    // Send notification when home page loads
-    Component.onCompleted: {
-        Rift.sendNotification("Hello world from the home page")
     }
 }
