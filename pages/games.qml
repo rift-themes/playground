@@ -273,7 +273,7 @@ FocusScope {
                     Keys.onDownPressed: moveCurrentIndexDown()
                     Keys.onReturnPressed: {
                         if (selectedGame) {
-                            Rift.navigation.push("game", { game: selectedGame, index: root.selectedIndex })
+                            Rift.navigation.push("game", { game: selectedGame, gameIndex: root.selectedIndex })
                         }
                     }
 
@@ -287,7 +287,7 @@ FocusScope {
                         function onNavigationDown() { gamesGrid.moveCurrentIndexDown() }
                         function onInputAccept() {
                             if (root.selectedGame) {
-                                Rift.navigation.push("game", { game: root.selectedGame, index: root.selectedIndex })
+                                Rift.navigation.push("game", { game: root.selectedGame, gameIndex: root.selectedIndex })
                             }
                         }
                     }
@@ -419,5 +419,16 @@ FocusScope {
             width: parent.width - 88
             elide: Text.ElideRight
         }
+    }
+
+    // Force focus on grid when page loads (with small delay for model to be ready)
+    Timer {
+        id: focusTimer
+        interval: 50
+        onTriggered: gamesGrid.forceActiveFocus()
+    }
+
+    Component.onCompleted: {
+        focusTimer.start()
     }
 }
