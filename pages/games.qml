@@ -96,7 +96,7 @@ FocusScope {
                     width: parent.width
                     height: root.height - 100
                     focus: true
-                    columns: 3
+
                     model: gamesModel
                     platform: root.platform
                     currentIndex: root.selectedIndex
