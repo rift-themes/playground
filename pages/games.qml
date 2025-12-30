@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Window
+import QtMultimedia
 import Rift 1.0
 
 /**
@@ -123,6 +124,27 @@ FocusScope {
                         // Check if THIS game is currently downloading (not queued, only active)
                         property bool isDownloading: Rift.backgroundArtworkCurrentGameId === (gameCard.modelData.id ?? -1)
 
+                        // Video playback state
+                        property bool shouldPlayVideo: false
+                        property string videoSource: gameCard.modelData.video ?? ""
+
+                        // Timer for delayed video start
+                        Timer {
+                            id: videoDelayTimer
+                            interval: 500
+                            onTriggered: gameCard.shouldPlayVideo = true
+                        }
+
+                        // Start/stop video based on selection
+                        onIsSelectedChanged: {
+                            if (isSelected && videoSource) {
+                                videoDelayTimer.start()
+                            } else {
+                                videoDelayTimer.stop()
+                                shouldPlayVideo = false
+                            }
+                        }
+
                         // Card container with selection effect
                         Rectangle {
                             anchors.fill: parent
@@ -139,16 +161,44 @@ FocusScope {
 
                             // Screenshot background
                             Image {
+                                id: screenshotImage
                                 anchors.fill: parent
                                 source: root.toFileUrl(gameCard.modelData.screenshot ?? "")
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true
+                                opacity: gameCard.shouldPlayVideo ? 0 : 1
+                                Behavior on opacity { NumberAnimation { duration: 300 } }
 
                                 // Darken for better wheel visibility
                                 Rectangle {
                                     anchors.fill: parent
                                     color: "#000"
                                     opacity: gameCard.isSelected ? 0.3 : 0.5
+                                }
+                            }
+
+                            // Video player (shown when selected and has video)
+                            Video {
+                                id: videoPlayer
+                                anchors.fill: parent
+                                source: gameCard.shouldPlayVideo ? root.toFileUrl(gameCard.videoSource) : ""
+                                fillMode: VideoOutput.PreserveAspectCrop
+                                loops: MediaPlayer.Infinite
+                                volume: 0  // Muted
+                                opacity: gameCard.shouldPlayVideo ? 1 : 0
+                                Behavior on opacity { NumberAnimation { duration: 300 } }
+
+                                onSourceChanged: {
+                                    if (source != "") {
+                                        play()
+                                    }
+                                }
+
+                                // Darken for better wheel visibility
+                                Rectangle {
+                                    anchors.fill: parent
+                                    color: "#000"
+                                    opacity: 0.3
                                 }
                             }
 
@@ -198,6 +248,8 @@ FocusScope {
                                 fillMode: Image.PreserveAspectFit
                                 asynchronous: true
                                 visible: !gameCard.isDownloading
+                                opacity: gameCard.shouldPlayVideo ? 0 : 1
+                                Behavior on opacity { NumberAnimation { duration: 300 } }
                             }
 
                             // Fallback: game name if no wheel
@@ -211,6 +263,8 @@ FocusScope {
                                 horizontalAlignment: Text.AlignHCenter
                                 wrapMode: Text.WordWrap
                                 visible: !gameCard.modelData.marquee && !gameCard.isDownloading
+                                opacity: gameCard.shouldPlayVideo ? 0 : 1
+                                Behavior on opacity { NumberAnimation { duration: 300 } }
                             }
                         }
                     }
