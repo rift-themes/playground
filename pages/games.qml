@@ -120,6 +120,9 @@ FocusScope {
                         required property int index
                         property bool isSelected: index === gamesGrid.currentIndex
 
+                        // Check if THIS game is currently downloading (not queued, only active)
+                        property bool isDownloading: Rift.backgroundArtworkCurrentGameId === (gameCard.modelData.id ?? -1)
+
                         // Card container with selection effect
                         Rectangle {
                             anchors.fill: parent
@@ -149,6 +152,43 @@ FocusScope {
                                 }
                             }
 
+                            // Loading indicator when downloading artwork
+                            Rectangle {
+                                anchors.fill: parent
+                                color: "#000"
+                                opacity: 0.7
+                                visible: gameCard.isDownloading
+
+                                // Spinning circle indicator
+                                Item {
+                                    id: spinner
+                                    anchors.centerIn: parent
+                                    width: 40
+                                    height: 40
+
+                                    RotationAnimation on rotation {
+                                        from: 0
+                                        to: 360
+                                        duration: 1000
+                                        loops: Animation.Infinite
+                                        running: gameCard.isDownloading
+                                    }
+
+                                    Repeater {
+                                        model: 8
+                                        Rectangle {
+                                            width: 6
+                                            height: 6
+                                            radius: 3
+                                            color: "#fff"
+                                            opacity: 1 - (index * 0.1)
+                                            x: spinner.width / 2 - 3 + Math.cos(index * Math.PI / 4) * 14
+                                            y: spinner.height / 2 - 3 + Math.sin(index * Math.PI / 4) * 14
+                                        }
+                                    }
+                                }
+                            }
+
                             // Wheel/Logo overlay
                             Image {
                                 anchors.centerIn: parent
@@ -157,6 +197,7 @@ FocusScope {
                                 source: root.toFileUrl(gameCard.modelData.marquee ?? "")
                                 fillMode: Image.PreserveAspectFit
                                 asynchronous: true
+                                visible: !gameCard.isDownloading
                             }
 
                             // Fallback: game name if no wheel
@@ -169,7 +210,7 @@ FocusScope {
                                 font.bold: true
                                 horizontalAlignment: Text.AlignHCenter
                                 wrapMode: Text.WordWrap
-                                visible: !gameCard.modelData.marquee
+                                visible: !gameCard.modelData.marquee && !gameCard.isDownloading
                             }
                         }
                     }
