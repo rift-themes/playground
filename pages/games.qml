@@ -30,30 +30,11 @@ FocusScope {
     property int selectedIndex: initialGameIndex
     property var selectedGame: gamesModel ? gamesModel.get(selectedIndex) : null
 
-    // Helper to ensure file:// prefix
-    function toFileUrl(path) {
-        if (!path) return ""
-        if (path.startsWith("file://")) return path
-        if (path.startsWith("/")) return "file://" + path
-        return path
-    }
-
-    // Helper to format date from YYYYMMDDTHHMMSS format
-    function formatReleaseDate(dateStr) {
-        if (!dateStr || dateStr.length < 8) return "-"
-        var year = dateStr.substring(0, 4)
-        var month = parseInt(dateStr.substring(4, 6), 10)
-        var day = parseInt(dateStr.substring(6, 8), 10)
-        var months = ["January", "February", "March", "April", "May", "June",
-                      "July", "August", "September", "October", "November", "December"]
-        return months[month - 1] + " " + day + ", " + year
-    }
-
     // Background - blurred screenshot of selected game
     Image {
         id: backgroundImage
         anchors.fill: parent
-        source: toFileUrl(selectedGame?.screenshot ?? "")
+        source: selectedGame?.screenshot ?? ""
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         opacity: 0.3
@@ -145,7 +126,7 @@ FocusScope {
                         Image {
                             width: parent.width
                             height: width * 1
-                            source: root.toFileUrl(selectedGame?.boxart ?? "")
+                            source: selectedGame?.boxart ?? ""
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
                             horizontalAlignment: Image.AlignHCenter
@@ -195,7 +176,7 @@ FocusScope {
                             // Release date
                             MetadataRow {
                                 label: "Released"
-                                value: formatReleaseDate(selectedGame?.releaseDate)
+                                value: selectedGame?.releaseDateFormatted ?? "-"
                             }
 
                             // Players
@@ -207,7 +188,7 @@ FocusScope {
                             // Rating
                             MetadataRow {
                                 label: "Rating"
-                                value: selectedGame?.rating ? (selectedGame.rating * 5).toFixed(1) + " / 5" : "-"
+                                value: selectedGame?.ratingFormatted ?? "-"
                             }
                         }
 
@@ -250,14 +231,4 @@ FocusScope {
         }
     }
 
-    // Force focus on grid when page loads (with small delay for model to be ready)
-    Timer {
-        id: focusTimer
-        interval: 50
-        onTriggered: gamesList.forceActiveFocus()
-    }
-
-    Component.onCompleted: {
-        focusTimer.start()
-    }
 }
