@@ -19,22 +19,6 @@ FocusScope {
         platformCarousel.currentIndex = initialPlatformIndex
     }
 
-    // Dynamic background color
-    property color bgColor: "#1a1a2e"
-
-    // Function to calculate color from platform name
-    function getColorForPlatform(name) {
-        if (!name) return "#1a1a2e"
-        // Better hash with more variation
-        var hash = 0
-        for (var i = 0; i < name.length; i++) {
-            hash = ((hash << 7) - hash + name.charCodeAt(i) * (i + 1)) | 0
-        }
-        var hue = Math.abs(hash % 360) / 360
-        var color = Qt.hsla(hue, 0.7, 0.20, 1)  // More saturated
-        return color
-    }
-
     // Background image based on selected platform
     Image {
         id: backgroundImage
