@@ -138,4 +138,8 @@ FocusScope {
         }
     }
 
+    // Send notification when home page loads
+    Component.onCompleted: {
+        Rift.sendNotification("Hello world from the home page")
+    }
 }

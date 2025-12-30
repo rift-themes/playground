@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Window
 import Qt.labs.settings 1.0
+import Rift 1.0
 
 /**
  * Playground Theme
@@ -51,7 +52,10 @@ FocusScope {
     // Page loader - dynamically loads pages from the pages/ folder
     Loader {
         id: pageLoader
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: footer.top
         focus: true
         // Add hotReloadVersion for cache busting
         source: Qt.resolvedUrl("pages/" + currentPage + ".qml") + "?v=" + Rift.themeManager.hotReloadVersion
@@ -173,6 +177,61 @@ FocusScope {
                 // Go back to home from games
                 currentPage = "home"
                 event.accepted = true
+            }
+        }
+    }
+
+    // Footer with help and notifications
+    RiftFooter {
+        id: footer
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        height: 48
+
+        // Theme customization
+        backgroundColor: "#1a1a2e"
+        textColor: "#AAAAAA"
+
+        // Contextual help based on current page
+        currentScreen: root.currentPage
+    }
+
+    // Search modal
+    RiftSearchModal {
+        id: searchModal
+        anchors.fill: parent
+        visible: false
+
+        // Theme customization
+        backgroundColor: "#1a1a2e"
+        textColor: "#FFFFFF"
+        accentColor: "#e94560"
+        keyboardColor: "#2a2a4e"
+        keyColor: "#3a3a5e"
+
+        // Platform filter: -1 for home/virtual platforms, >0 for specific platform
+        platformId: {
+            if (currentPage === "games" && selectedPlatform && selectedPlatform.id > 0) {
+                return selectedPlatform.id
+            }
+            return -1
+        }
+
+        onGameSelected: function(game) {
+            // Navigate to the selected game
+            root.selectedGame = game
+            root.currentPage = "game"
+        }
+    }
+
+    // Rift input for search (Y button / I key)
+    Connections {
+        target: Rift
+        function onInputSearch() {
+            console.log("Search triggered!")
+            if (!searchModal.visible) {
+                searchModal.open()
             }
         }
     }
