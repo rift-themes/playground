@@ -123,7 +123,10 @@ FocusScope {
                         // Boxart
                         Image {
                             width: parent.width
-                            height: width * 1
+                            height: Math.min(
+                                implicitHeight > 0 ? (width / implicitWidth * implicitHeight) : width,
+                                root.height * 0.4
+                            )
                             source: selectedGame?.boxart ?? ""
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
