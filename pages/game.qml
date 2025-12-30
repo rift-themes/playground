@@ -140,124 +140,183 @@ FocusScope {
                 }
             }
 
-            // Play button
-            Rectangle {
-                id: playButton
+            // Buttons with focus navigation
+            FocusScope {
+                id: buttonsArea
                 width: parent.width
-                height: 56
-                radius: 28
-                color: playButtonArea.containsMouse ? "#ff5a7a" : "#e94560"
-                scale: playButtonArea.pressed ? 0.95 : 1.0
+                height: buttonsColumn.height
+                focus: true
 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 100 } }
+                property int focusedButton: 0
+                property int buttonCount: achievements && achievements.numAchievements > 0 ? 3 : 2
 
-                Text {
-                    anchors.centerIn: parent
-                    text: "PLAY"
-                    color: "#fff"
-                    font.pixelSize: 20
-                    font.bold: true
-                }
+                Column {
+                    id: buttonsColumn
+                    width: parent.width
+                    spacing: 12
 
-                MouseArea {
-                    id: playButtonArea
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: {
-                        if (game) Rift.launchGame(game.id)
+                    // Play button
+                    Rectangle {
+                        id: playButton
+                        width: parent.width
+                        height: 56
+                        radius: 28
+                        property bool isFocused: buttonsArea.focusedButton === 0 && buttonsArea.activeFocus
+                        color: isFocused || playButtonArea.containsMouse ? "#ff5a7a" : "#e94560"
+                        scale: playButtonArea.pressed ? 0.95 : 1.0
+                        border.color: isFocused ? "#fff" : "transparent"
+                        border.width: isFocused ? 3 : 0
+
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on scale { NumberAnimation { duration: 100 } }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "PLAY"
+                            color: "#fff"
+                            font.pixelSize: 20
+                            font.bold: true
+                        }
+
+                        MouseArea {
+                            id: playButtonArea
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            hoverEnabled: true
+                            onClicked: {
+                                if (game) Rift.launchGame(game.id)
+                            }
+                        }
                     }
-                }
-            }
 
-            // Favorite button
-            Rectangle {
-                id: favoriteButton
-                width: parent.width
-                height: 48
-                radius: 24
-                color: {
-                    if (game?.favorite) {
-                        return favoriteButtonArea.containsMouse ? "#ff5a7a" : "#e94560"
-                    } else {
-                        return favoriteButtonArea.containsMouse ? "#444" : "#333"
-                    }
-                }
-                border.color: game?.favorite ? "#e94560" : (favoriteButtonArea.containsMouse ? "#777" : "#555")
-                border.width: 1
-                scale: favoriteButtonArea.pressed ? 0.95 : 1.0
+                    // Secondary buttons pill (Favorite + Achievements)
+                    Row {
+                        width: parent.width
+                        spacing: 8
 
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 100 } }
+                        // Favorite button
+                        Rectangle {
+                            id: favoriteButton
+                            width: achievements && achievements.numAchievements > 0 ? (parent.width - 8) / 2 : parent.width
+                            height: 48
+                            radius: 24
+                            property bool isFocused: buttonsArea.focusedButton === 1 && buttonsArea.activeFocus
+                            color: {
+                                if (game?.favorite) {
+                                    return isFocused || favoriteButtonArea.containsMouse ? "#ff5a7a" : "#e94560"
+                                } else {
+                                    return isFocused || favoriteButtonArea.containsMouse ? "#444" : "#333"
+                                }
+                            }
+                            border.color: isFocused ? "#fff" : (game?.favorite ? "#e94560" : (favoriteButtonArea.containsMouse ? "#777" : "#555"))
+                            border.width: isFocused ? 3 : 1
+                            scale: favoriteButtonArea.pressed ? 0.95 : 1.0
 
-                Row {
-                    anchors.centerIn: parent
-                    spacing: 8
-                    Text {
-                        text: "♥"
-                        color: game?.favorite ? "#fff" : (favoriteButtonArea.containsMouse ? "#aaa" : "#888")
-                        font.pixelSize: 18
-                    }
-                    Text {
-                        text: game?.favorite ? "FAVORITE" : "ADD TO FAVORITES"
-                        color: game?.favorite ? "#fff" : (favoriteButtonArea.containsMouse ? "#aaa" : "#888")
-                        font.pixelSize: 14
-                        font.bold: true
-                    }
-                }
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on scale { NumberAnimation { duration: 100 } }
 
-                MouseArea {
-                    id: favoriteButtonArea
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: {
-                        if (game) {
-                            Rift.setGameFavorite(game.id, !game.favorite)
-                            // Re-fetch game data to update the UI
-                            root.game = Rift.getGame(game.id)
+                            Text {
+                                anchors.centerIn: parent
+                                text: "♥"
+                                color: game?.favorite ? "#fff" : (favoriteButton.isFocused || favoriteButtonArea.containsMouse ? "#fff" : "#888")
+                                font.pixelSize: 20
+                            }
+
+                            MouseArea {
+                                id: favoriteButtonArea
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
+                                onClicked: {
+                                    if (game) {
+                                        Rift.setGameFavorite(game.id, !game.favorite)
+                                        root.game = Rift.getGame(game.id)
+                                    }
+                                }
+                            }
+                        }
+
+                        // Achievements button
+                        Rectangle {
+                            id: viewAchievementsButton
+                            width: (parent.width - 8) / 2
+                            height: 48
+                            radius: 24
+                            property bool isFocused: buttonsArea.focusedButton === 2 && buttonsArea.activeFocus
+                            color: isFocused || viewAchievementsArea.containsMouse ? "#444" : "#333"
+                            border.color: isFocused ? "#fff" : (viewAchievementsArea.containsMouse ? "#FFD700" : "#555")
+                            border.width: isFocused ? 3 : 1
+                            scale: viewAchievementsArea.pressed ? 0.95 : 1.0
+                            visible: achievements && achievements.numAchievements > 0
+
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on scale { NumberAnimation { duration: 100 } }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: "★"
+                                color: viewAchievementsButton.isFocused || viewAchievementsArea.containsMouse ? "#FFD700" : "#888"
+                                font.pixelSize: 20
+                            }
+
+                            MouseArea {
+                                id: viewAchievementsArea
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                hoverEnabled: true
+                                onClicked: {
+                                    if (achievements && achievements.id) {
+                                        root.openModalOnLoad = true
+                                        if (detailedAchievements.length > 0) {
+                                            root.achievementsModalVisible = true
+                                            root.openModalOnLoad = false
+                                        } else {
+                                            root.loadingAchievements = true
+                                            root.achievementsError = ""
+                                            Rift.fetchDetailedAchievements(achievements.id)
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-            }
 
-            // View Achievements button
-            Rectangle {
-                id: viewAchievementsButton
-                width: parent.width
-                height: 48
-                radius: 24
-                color: viewAchievementsArea.containsMouse ? "#444" : "#333"
-                border.color: viewAchievementsArea.containsMouse ? "#FFD700" : "#555"
-                border.width: 1
-                scale: viewAchievementsArea.pressed ? 0.95 : 1.0
-                visible: achievements && achievements.numAchievements > 0
-
-                Behavior on color { ColorAnimation { duration: 150 } }
-                Behavior on scale { NumberAnimation { duration: 100 } }
-
-                Row {
-                    anchors.centerIn: parent
-                    spacing: 8
-                    Text {
-                        text: "🏆"
-                        font.pixelSize: 16
+                // Keyboard/gamepad navigation
+                Keys.onUpPressed: function(event) {
+                    if (focusedButton > 0) focusedButton = 0
+                    event.accepted = true
+                }
+                Keys.onDownPressed: function(event) {
+                    if (focusedButton === 0) focusedButton = 1
+                    event.accepted = true
+                }
+                Keys.onLeftPressed: function(event) {
+                    if (focusedButton === 2) focusedButton = 1
+                    event.accepted = true
+                }
+                Keys.onRightPressed: function(event) {
+                    if (focusedButton === 1 && buttonCount > 2) {
+                        focusedButton = 2
+                    } else if (similarGames && similarGames.length > 0) {
+                        similarGamesCarousel.forceActiveFocus()
                     }
-                    Text {
-                        text: "ACHIEVEMENTS"
-                        color: viewAchievementsArea.containsMouse ? "#FFD700" : "#888"
-                        font.pixelSize: 14
-                        font.bold: true
-                    }
+                    event.accepted = true
+                }
+                Keys.onReturnPressed: function(event) {
+                    activateButton()
+                    event.accepted = true
                 }
 
-                MouseArea {
-                    id: viewAchievementsArea
-                    anchors.fill: parent
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
-                    onClicked: {
+                function activateButton() {
+                    if (focusedButton === 0) {
+                        if (game) Rift.launchGame(game.id)
+                    } else if (focusedButton === 1) {
+                        if (game) {
+                            Rift.setGameFavorite(game.id, !game.favorite)
+                            root.game = Rift.getGame(game.id)
+                        }
+                    } else if (focusedButton === 2) {
                         if (achievements && achievements.id) {
                             root.openModalOnLoad = true
                             if (detailedAchievements.length > 0) {
@@ -449,6 +508,7 @@ FocusScope {
                     carouselType: "horizontal"
                     alignment: "start"
                     startOffset: 0
+                    wrapAround: false
 
                     // Item sizing
                     itemSizeX: 0.12
@@ -536,6 +596,13 @@ FocusScope {
                             root.game = Rift.getGame(selectedGame.id)
                         }
                     }
+
+                    // Handle boundary (when can't navigate further)
+                    onBoundaryReached: function(direction) {
+                        if (direction === "left" || direction === "up") {
+                            buttonsArea.forceActiveFocus()
+                        }
+                    }
                 }
             }
             }
@@ -562,8 +629,12 @@ FocusScope {
             }
         }
         function onInputAccept() {
-            if (!achievementsModalVisible && game) {
-                Rift.launchGame(game.id)
+            if (!achievementsModalVisible) {
+                if (buttonsArea.activeFocus) {
+                    buttonsArea.activateButton()
+                } else if (similarGamesCarousel.activeFocus) {
+                    similarGamesCarousel.itemActivated(similarGamesCarousel.currentIndex)
+                }
             }
         }
         function onDetailedAchievementsReceived(achievementsList) {
@@ -604,7 +675,13 @@ FocusScope {
         }
     }
     Keys.onReturnPressed: {
-        if (!achievementsModalVisible && game) Rift.launchGame(game.id)
+        if (!achievementsModalVisible) {
+            if (similarGamesCarousel.activeFocus) {
+                similarGamesCarousel.itemActivated(similarGamesCarousel.currentIndex)
+            } else {
+                buttonsArea.activateButton()
+            }
+        }
     }
 
     // Metadata item component
