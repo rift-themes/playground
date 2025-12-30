@@ -71,7 +71,8 @@ FocusScope {
 
                 RiftCarousel {
                     id: platformCarousel
-                    anchors.fill: parent
+                    width: parent.width
+                    height: parent.height
                     focus: true
 
                     // Model & data
