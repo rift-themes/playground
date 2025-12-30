@@ -117,6 +117,7 @@ FocusScope {
                         height: gamesGrid.cellHeight - 8
                         game: modelData
                         isSelected: index === gamesGrid.currentIndex
+                        showCover: true
                     }
 
                     // Keyboard navigation
