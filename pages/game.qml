@@ -381,47 +381,23 @@ FocusScope {
                         unfocusedItemOpacity: 0.6
                         itemStacking: "centered"
 
-                        // Custom delegate for game cards
+                        // Custom delegate using RiftGameCard
                         delegate: Component {
                             Item {
                                 property var modelData
                                 property int itemIndex
                                 property bool isSelected
 
-                                Rectangle {
+                                RiftGameCard {
                                     anchors.fill: parent
-                                    radius: 6
-                                    color: isSelected ? "#333" : "#222"
-                                    border.color: isSelected ? "#e94560" : "transparent"
-                                    border.width: 2
-
-                                    Behavior on color { ColorAnimation { duration: 150 } }
-
-                                    // Boxart
-                                    Image {
-                                        id: similarBoxart
-                                        anchors.fill: parent
-                                        anchors.margins: 3
-                                        source: modelData?.boxart ?? ""
-                                        fillMode: Image.PreserveAspectFit
-                                        asynchronous: true
-
-                                        opacity: status === Image.Ready ? 1 : 0
-                                        Behavior on opacity { NumberAnimation { duration: 200 } }
-                                    }
-
-                                    // Fallback text if no boxart
-                                    Text {
-                                        anchors.centerIn: parent
-                                        anchors.margins: 6
-                                        width: parent.width - 12
-                                        text: modelData?.name ?? ""
-                                        color: "#888"
-                                        font.pixelSize: 9
-                                        wrapMode: Text.WordWrap
-                                        horizontalAlignment: Text.AlignHCenter
-                                        visible: similarBoxart.status !== Image.Ready
-                                    }
+                                    game: modelData
+                                    isSelected: parent.isSelected
+                                    showCover: true
+                                    showVideo: false
+                                    showBorder: true
+                                    borderColor: "#e94560"
+                                    selectedScale: 1.0
+                                    cardRadius: 6
                                 }
 
                                 // Game name label below (visible when selected)
