@@ -19,8 +19,7 @@ FocusScope {
     property int initialGameIndex: 0
     onInitialGameIndexChanged: {
         selectedIndex = initialGameIndex
-        // Position without animation
-        gamesGrid.positionViewAtIndex(initialGameIndex, GridView.Center)
+        gamesList.positionAtIndex(initialGameIndex)
     }
 
     // Platform passed from parent (or default to first)
@@ -94,85 +93,33 @@ FocusScope {
                     bottomPadding: 16
                 }
 
-                // Hidden image to detect cover aspect ratio for non-virtual platforms
-                Image {
-                    id: aspectDetector
-                    visible: false
-                    source: {
-                        if (platform?.isVirtual) return ""
-                        var firstGame = gamesModel?.get(0)
-                        return toFileUrl(firstGame?.boxart ?? "")
-                    }
-                    onStatusChanged: {
-                        if (status === Image.Ready && implicitWidth > 0 && implicitHeight > 0) {
-                            gamesGrid.detectedAspectRatio = implicitWidth / implicitHeight
-                        }
-                    }
-                }
-
                 // Games grid
-                GridView {
-                    id: gamesGrid
+                RiftGamesList {
+                    id: gamesList
                     width: parent.width
                     height: root.height - 100
-
-                    // Detected aspect ratio from first cover (default 0.75 for virtual/fallback)
-                    property real detectedAspectRatio: 0.75
-
-                    // For virtual platforms: fixed ratio. For others: use detected ratio
-                    property real effectiveAspectRatio: platform?.isVirtual ? 0.75 : detectedAspectRatio
-
-                    // Calculate ideal cell size based on aspect ratio
-                    property real idealCellHeight: height / 2.5
-                    property real idealCellWidth: idealCellHeight * effectiveAspectRatio
-
-                    // Calculate how many columns fit and distribute width evenly
-                    property int columnCount: Math.max(1, Math.floor(width / idealCellWidth))
-
-                    cellWidth: width / columnCount
-                    cellHeight: cellWidth / effectiveAspectRatio
-                    clip: true
                     focus: true
 
                     model: gamesModel
-
+                    platform: root.platform
                     currentIndex: root.selectedIndex
+
                     onCurrentIndexChanged: root.selectedIndex = currentIndex
-
-                    delegate: RiftGameCard {
-                        required property var modelData
-                        required property int index
-
-                        width: gamesGrid.cellWidth - 8
-                        height: gamesGrid.cellHeight - 8
-                        game: modelData
-                        isSelected: index === gamesGrid.currentIndex
-                        showCover: true
+                    onGameActivated: function(game, index) {
+                        Rift.navigation.push("game", { game: game, gameIndex: index })
                     }
 
-                    // Keyboard navigation
-                    Keys.onLeftPressed: moveCurrentIndexLeft()
-                    Keys.onRightPressed: moveCurrentIndexRight()
-                    Keys.onUpPressed: moveCurrentIndexUp()
-                    Keys.onDownPressed: moveCurrentIndexDown()
-                    Keys.onReturnPressed: {
-                        if (selectedGame) {
-                            Rift.navigation.push("game", { game: selectedGame, gameIndex: root.selectedIndex })
-                        }
-                    }
+                    // Custom delegate (optional - uses RiftGameCard by default)
+                    delegate: Component {
+                        RiftGameCard {
+                            required property var modelData
+                            required property int index
 
-                    // Rift input handling
-                    Connections {
-                        target: Rift
-                        enabled: gamesGrid.activeFocus
-                        function onNavigationLeft() { gamesGrid.moveCurrentIndexLeft() }
-                        function onNavigationRight() { gamesGrid.moveCurrentIndexRight() }
-                        function onNavigationUp() { gamesGrid.moveCurrentIndexUp() }
-                        function onNavigationDown() { gamesGrid.moveCurrentIndexDown() }
-                        function onInputAccept() {
-                            if (root.selectedGame) {
-                                Rift.navigation.push("game", { game: root.selectedGame, gameIndex: root.selectedIndex })
-                            }
+                            width: gamesList.cellWidth - 8
+                            height: gamesList.cellHeight - 8
+                            game: modelData
+                            isSelected: index === gamesList.currentIndex
+                            showCover: true
                         }
                     }
                 }
@@ -309,7 +256,7 @@ FocusScope {
     Timer {
         id: focusTimer
         interval: 50
-        onTriggered: gamesGrid.forceActiveFocus()
+        onTriggered: gamesList.forceActiveFocus()
     }
 
     Component.onCompleted: {
