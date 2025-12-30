@@ -94,13 +94,43 @@ FocusScope {
                     bottomPadding: 16
                 }
 
+                // Hidden image to detect cover aspect ratio for non-virtual platforms
+                Image {
+                    id: aspectDetector
+                    visible: false
+                    source: {
+                        if (platform?.isVirtual) return ""
+                        var firstGame = gamesModel?.get(0)
+                        return toFileUrl(firstGame?.boxart ?? "")
+                    }
+                    onStatusChanged: {
+                        if (status === Image.Ready && implicitWidth > 0 && implicitHeight > 0) {
+                            gamesGrid.detectedAspectRatio = implicitWidth / implicitHeight
+                        }
+                    }
+                }
+
                 // Games grid
                 GridView {
                     id: gamesGrid
                     width: parent.width
-                    height: root.height - 50
-                    cellWidth: width / 3
-                    cellHeight: cellWidth * 0.75
+                    height: root.height - 100
+
+                    // Detected aspect ratio from first cover (default 0.75 for virtual/fallback)
+                    property real detectedAspectRatio: 0.75
+
+                    // For virtual platforms: fixed ratio. For others: use detected ratio
+                    property real effectiveAspectRatio: platform?.isVirtual ? 0.75 : detectedAspectRatio
+
+                    // Calculate ideal cell size based on aspect ratio
+                    property real idealCellHeight: height / 2.5
+                    property real idealCellWidth: idealCellHeight * effectiveAspectRatio
+
+                    // Calculate how many columns fit and distribute width evenly
+                    property int columnCount: Math.max(1, Math.floor(width / idealCellWidth))
+
+                    cellWidth: width / columnCount
+                    cellHeight: cellWidth / effectiveAspectRatio
                     clip: true
                     focus: true
 
