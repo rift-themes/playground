@@ -111,7 +111,6 @@ FocusScope {
                     // Handle activation - navigate to games page
                     onItemActivated: function(index) {
                         var platform = model.get(index)
-                        console.log("Platform selected:", platform.name, "at index:", index)
                         Rift.navigation.push("games", { platform: platform, platformIndex: index })
                     }
                 }
