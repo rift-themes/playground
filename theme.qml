@@ -128,6 +128,9 @@ FocusScope {
 
     // Restore state after hot reload
     Component.onCompleted: {
+        // Start background artwork download for all games without artwork
+        Rift.queuePlatformGamesForArtwork(-1)
+
         var savedPage = hotReloadSettings.savedPage
         console.log("Hot reload restore - savedPage:", savedPage, "platformId:", hotReloadSettings.savedPlatformId, "gameId:", hotReloadSettings.savedGameId)
         if (savedPage && savedPage !== "home") {

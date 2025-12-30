@@ -29,12 +29,12 @@ FocusScope {
     property var platform: Rift.platforms.get(0)
     property int platformId: platform?.id ?? -1
 
-    // Games for this platform
-    property var gamesModel: Rift.getGamesByPlatform(platformId)
+    // Games for this platform - using reactive model for live updates
+    property var gamesModel: Rift.getGamesModelForPlatform(platformId)
 
     // Currently selected game index
     property int selectedIndex: initialGameIndex
-    property var selectedGame: gamesModel && gamesModel.length > selectedIndex ? gamesModel[selectedIndex] : null
+    property var selectedGame: gamesModel ? gamesModel.get(selectedIndex) : null
 
     // Helper to ensure file:// prefix
     function toFileUrl(path) {
