@@ -12,9 +12,6 @@ FocusScope {
     id: root
     focus: true
 
-    // Signal to navigate to game detail page (includes index for restoration)
-    signal navigateToGame(var game, int index)
-
     // Debug mode passed from parent theme
     property bool debugGrid: false
 
@@ -276,7 +273,7 @@ FocusScope {
                     Keys.onDownPressed: moveCurrentIndexDown()
                     Keys.onReturnPressed: {
                         if (selectedGame) {
-                            root.navigateToGame(selectedGame, root.selectedIndex)
+                            Rift.navigation.push("game", { game: selectedGame, index: root.selectedIndex })
                         }
                     }
 
@@ -290,7 +287,7 @@ FocusScope {
                         function onNavigationDown() { gamesGrid.moveCurrentIndexDown() }
                         function onInputAccept() {
                             if (root.selectedGame) {
-                                root.navigateToGame(root.selectedGame, root.selectedIndex)
+                                Rift.navigation.push("game", { game: root.selectedGame, index: root.selectedIndex })
                             }
                         }
                     }

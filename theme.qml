@@ -1,6 +1,4 @@
 import QtQuick
-import QtQuick.Window
-import Qt.labs.settings 1.0
 import Rift 1.0
 
 /**
@@ -9,38 +7,12 @@ import Rift 1.0
  */
 FocusScope {
     id: root
-
     focus: true
 
-    // Theme receives the API from Rift
+    // Theme receives the API from Rift (for Pegasus compatibility)
     property var api: null
 
-    // Current view/page - start with "home", restore in Component.onCompleted
-    property string currentPage: "home"
-
-    // Settings for hot reload state persistence
-    Settings {
-        id: hotReloadSettings
-        category: "PlaygroundHotReload"
-        property string savedPage: "home"
-        property int savedPlatformId: -1
-        property int savedGameId: -1
-    }
-
-    // Selected platform (passed to games page)
-    property var selectedPlatform: null
-
-    // Selected game (passed to game detail page)
-    property var selectedGame: null
-
-    // Last selected platform index for carousel restoration
-    property int lastPlatformIndex: 0
-
-    // Last selected game index for grid restoration
-    property int lastGameIndex: 0
-
     // Debug mode - shows grid outlines (red=cols, blue=rows)
-    // Controlled by Developer > Show Outlines setting
     property bool debugGrid: Rift.settings.developerShowOutlines
 
     // Background
@@ -49,193 +21,62 @@ FocusScope {
         color: "#1a1a2e"
     }
 
-    // Page loader - dynamically loads pages from the pages/ folder
-    Loader {
-        id: pageLoader
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.bottom: footer.top
+    // Router handles navigation, page loading, and hot reload
+    RiftRouter {
+        id: router
+        anchors.fill: parent
+        anchors.bottomMargin: footer.height
         focus: true
-        // Add hotReloadVersion for cache busting
-        source: Qt.resolvedUrl("pages/" + currentPage + ".qml") + "?v=" + Rift.themeManager.hotReloadVersion
-
-        // Pass properties and focus to loaded page
-        onLoaded: {
-            if (item) {
-                item.debugGrid = Qt.binding(function() { return root.debugGrid })
-                // Pass selected platform to games page
-                if (item.hasOwnProperty("platform") && root.selectedPlatform) {
-                    item.platform = root.selectedPlatform
-                }
-                // Pass selected game to game detail page
-                if (item.hasOwnProperty("game") && root.selectedGame) {
-                    item.game = root.selectedGame
-                }
-                // Pass last platform index to home page
-                if (item.hasOwnProperty("initialPlatformIndex")) {
-                    item.initialPlatformIndex = root.lastPlatformIndex
-                }
-                // Connect navigation signal from home page
-                if (item.hasOwnProperty("navigateToGames")) {
-                    item.navigateToGames.connect(function(platform, index) {
-                        // Reset game index if changing platform
-                        if (root.selectedPlatform?.id !== platform.id) {
-                            root.lastGameIndex = 0
-                        }
-                        root.selectedPlatform = platform
-                        root.lastPlatformIndex = index
-                        root.currentPage = "games"
-                    })
-                }
-                // Pass last game index to games page
-                if (item.hasOwnProperty("initialGameIndex")) {
-                    item.initialGameIndex = root.lastGameIndex
-                }
-                // Connect navigation signal from games page
-                if (item.hasOwnProperty("navigateToGame")) {
-                    item.navigateToGame.connect(function(game, index) {
-                        root.selectedGame = game
-                        root.lastGameIndex = index
-                        root.currentPage = "game"
-                    })
-                }
-                // Connect goBack signal from game detail page
-                if (item.hasOwnProperty("goBack")) {
-                    item.goBack.connect(function() {
-                        root.currentPage = "games"
-                    })
-                }
-                item.focus = true
-            }
-        }
+        pagesPath: "pages/"
+        baseUrl: Qt.resolvedUrl(".")
     }
 
-    // Hot reload: force reload when any file changes
+    // Pass debugGrid to pages
     Connections {
-        target: Rift.themeManager
-        function onHotReloadTriggered() {
-            // Save state before reload
-            hotReloadSettings.savedPage = root.currentPage
-            hotReloadSettings.savedPlatformId = root.selectedPlatform?.id ?? -1
-            hotReloadSettings.savedGameId = root.selectedGame?.id ?? -1
-
-            var src = pageLoader.source
-            pageLoader.source = ""
-            pageLoader.source = src
-        }
-    }
-
-    // Restore state after hot reload
-    Component.onCompleted: {
-        // Start background artwork download for all games without artwork
-        Rift.queuePlatformGamesForArtwork(-1)
-
-        var savedPage = hotReloadSettings.savedPage
-        console.log("Hot reload restore - savedPage:", savedPage, "platformId:", hotReloadSettings.savedPlatformId, "gameId:", hotReloadSettings.savedGameId)
-        if (savedPage && savedPage !== "home") {
-            // Restore platform if needed
-            var platformId = hotReloadSettings.savedPlatformId
-            if (platformId > 0) {
-                for (var i = 0; i < Rift.platforms.count; i++) {
-                    var p = Rift.platforms.get(i)
-                    if (p.id === platformId) {
-                        root.selectedPlatform = p
-                        break
-                    }
-                }
-            }
-            // Restore game if needed
-            var gameId = hotReloadSettings.savedGameId
-            if (gameId > 0) {
-                var game = Rift.getGame(gameId)
-                console.log("Restored game:", JSON.stringify(game))
-                root.selectedGame = game
-            }
-            // Restore page
-            root.currentPage = savedPage
-        }
-    }
-
-    // Rift input handling
-    Connections {
-        target: Rift
-        function onInputBack() {
-            if (currentPage === "game") {
-                currentPage = "games"
-            } else if (currentPage === "games") {
-                currentPage = "home"
+        target: router
+        function onCurrentItemChanged() {
+            if (router.currentItem && router.currentItem.hasOwnProperty("debugGrid")) {
+                router.currentItem.debugGrid = Qt.binding(function() { return root.debugGrid })
             }
         }
     }
 
-    // Keyboard navigation
-    Keys.onPressed: function(event) {
-        if (event.key === Qt.Key_Escape || event.key === Qt.Key_Backspace) {
-            if (currentPage === "game") {
-                // Go back to games from game detail
-                currentPage = "games"
-                event.accepted = true
-            } else if (currentPage === "games") {
-                // Go back to home from games
-                currentPage = "home"
-                event.accepted = true
-            }
-        }
-    }
-
-    // Footer with help and notifications
+    // Footer - currentScreen auto-detected from Rift.navigation
     RiftFooter {
         id: footer
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         height: 48
-
-        // Theme customization
         backgroundColor: "#1a1a2e"
         textColor: "#AAAAAA"
-
-        // Contextual help based on current page
-        currentScreen: root.currentPage
     }
 
-    // Search modal
+    // Search modal - platformId and navigation auto-detected
     RiftSearchModal {
         id: searchModal
         anchors.fill: parent
         visible: false
-
-        // Theme customization
+        autoNavigate: true
         backgroundColor: "#1a1a2e"
         textColor: "#FFFFFF"
         accentColor: "#e94560"
         keyboardColor: "#2a2a4e"
         keyColor: "#3a3a5e"
-
-        // Platform filter: -1 for home/virtual platforms, >0 for specific platform
-        platformId: {
-            if (currentPage === "games" && selectedPlatform && selectedPlatform.id > 0) {
-                return selectedPlatform.id
-            }
-            return -1
-        }
-
-        onGameSelected: function(game) {
-            // Navigate to the selected game
-            root.selectedGame = game
-            root.currentPage = "game"
-        }
     }
 
-    // Rift input for search (Y button / I key)
+    // Open search on Y button
     Connections {
         target: Rift
         function onInputSearch() {
-            console.log("Search triggered!")
             if (!searchModal.visible) {
                 searchModal.open()
             }
         }
+    }
+
+    // Start background artwork download on load
+    Component.onCompleted: {
+        Rift.queuePlatformGamesForArtwork(-1)
     }
 }

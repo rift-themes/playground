@@ -10,9 +10,6 @@ FocusScope {
     id: root
     focus: true
 
-    // Signal to navigate to games page (includes index for restoration)
-    signal navigateToGames(var platform, int index)
-
     // Debug mode passed from parent theme
     property bool debugGrid: false
 
@@ -131,7 +128,7 @@ FocusScope {
                     onItemActivated: function(index) {
                         var platform = model.get(index)
                         console.log("Platform selected:", platform.name, "at index:", index)
-                        root.navigateToGames(platform, index)
+                        Rift.navigation.push("games", { platform: platform, index: index })
                     }
                 }
             }

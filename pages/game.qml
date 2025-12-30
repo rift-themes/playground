@@ -56,9 +56,6 @@ FocusScope {
         }
     }
 
-    // Signal to go back
-    signal goBack()
-
     // Helper to ensure file:// prefix
     function toFileUrl(path) {
         if (!path) return ""
@@ -685,7 +682,7 @@ FocusScope {
             if (achievementsModalVisible) {
                 achievementsModalVisible = false
             } else {
-                root.goBack()
+                Rift.navigation.pop()
             }
         }
         function onInputAccept() {
@@ -720,14 +717,14 @@ FocusScope {
         if (achievementsModalVisible) {
             achievementsModalVisible = false
         } else {
-            goBack()
+            Rift.navigation.pop()
         }
     }
     Keys.onBackPressed: {
         if (achievementsModalVisible) {
             achievementsModalVisible = false
         } else {
-            goBack()
+            Rift.navigation.pop()
         }
     }
     Keys.onReturnPressed: {
