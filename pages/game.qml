@@ -532,7 +532,7 @@ FocusScope {
         property bool primary: false
         property bool active: false
         property bool focused: false
-        property color accentColor: "#E88D97"
+        property color accentColor: "#e94560"
         property color activeAccentColor: accentColor
 
         signal clicked()
