@@ -218,7 +218,6 @@ FocusScope {
                     font.pixelSize: 48
                     font.bold: true
                     wrapMode: Text.WordWrap
-                    visible: !game?.boxart
                 }
 
                 // Subtitle with platform (hidden if boxart is available)
@@ -227,7 +226,6 @@ FocusScope {
                     color: "#888"
                     font.pixelSize: 18
                     font.italic: true
-                    visible: !game?.boxart
                 }
 
                 // Separator line (hidden if boxart is available)
@@ -395,7 +393,7 @@ FocusScope {
                                     showCover: true
                                     showVideo: false
                                     showBorder: true
-                                    borderColor: "#e94560"
+                                    borderColor: "#E88D97"
                                     selectedScale: 1.0
                                     cardRadius: 6
                                 }
@@ -534,7 +532,7 @@ FocusScope {
         property bool primary: false
         property bool active: false
         property bool focused: false
-        property color accentColor: "#e94560"
+        property color accentColor: "#E88D97"
         property color activeAccentColor: accentColor
 
         signal clicked()
