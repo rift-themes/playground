@@ -44,7 +44,7 @@ FocusScope {
         Behavior on opacity { NumberAnimation { duration: 500 } }
     }
 
-    // Gradient overlay for readability
+    // Gradient overlay for readability (bottom)
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
@@ -52,6 +52,17 @@ FocusScope {
             GradientStop { position: 0.3; color: "#80000000" }
             GradientStop { position: 0.6; color: "#CC000000" }
             GradientStop { position: 1.0; color: "#FF000000" }
+        }
+    }
+
+    // Top gradient for title readability
+    Rectangle {
+        width: parent.width
+        height: parent.height * 0.25
+        anchors.top: parent.top
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: "#CC000000" }
+            GradientStop { position: 1.0; color: "#00000000" }
         }
     }
 
