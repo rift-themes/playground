@@ -105,120 +105,43 @@ FocusScope {
                     visible: game?.rating > 0
                 }
 
-                // Buttons with focus navigation
-                FocusScope {
-                    id: buttonsArea
-                    width: parent.width
-                    height: buttonsColumn.height
-                    focus: true
-
-                    property int focusedButton: 0
-                    property int buttonCount: achievements && achievements.numAchievements > 0 ? 3 : 2
-
-                    Column {
-                        id: buttonsColumn
-                        width: parent.width
-                        spacing: 12
-
-                        // Play button
-                        GameButton {
-                            width: parent.width
-                            text: "PLAY"
-                            primary: true
-                            focused: buttonsArea.focusedButton === 0 && buttonsArea.activeFocus
-                            onClicked: if (game) Rift.launchGame(game.id)
-                        }
-
-                        // Secondary buttons (Favorite + Achievements)
-                        Row {
-                            width: parent.width
-                            spacing: 8
-
-                            GameButton {
-                                width: achievements && achievements.numAchievements > 0 ? (parent.width - 8) / 2 : parent.width
-                                text: "♥"
-                                active: game?.favorite ?? false
-                                focused: buttonsArea.focusedButton === 1 && buttonsArea.activeFocus
-                                onClicked: {
-                                    if (game) {
-                                        Rift.setGameFavorite(game.id, !game.favorite)
-                                        root.game = Rift.getGame(game.id)
-                                    }
-                                }
-                            }
-
-                            GameButton {
-                                width: (parent.width - 8) / 2
-                                text: "★"
-                                focused: buttonsArea.focusedButton === 2 && buttonsArea.activeFocus
-                                activeAccentColor: "#FFD700"
-                                visible: achievements && achievements.numAchievements > 0
-                                onClicked: {
-                                    if (achievements && achievements.id) {
-                                        root.achievementsModalVisible = true
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Keyboard/gamepad navigation
-                    Keys.onUpPressed: function(event) {
-                        if (focusedButton > 0) focusedButton = 0
-                        event.accepted = true
-                    }
-                    Keys.onDownPressed: function(event) {
-                        if (focusedButton === 0) focusedButton = 1
-                        event.accepted = true
-                    }
-                    Keys.onLeftPressed: function(event) {
-                        if (focusedButton === 2) focusedButton = 1
-                        event.accepted = true
-                    }
-                    Keys.onRightPressed: function(event) {
-                        if (focusedButton === 1 && buttonCount > 2) {
-                            focusedButton = 2
-                        } else if (similarGames && similarGames.length > 0) {
-                            similarGamesCarousel.forceActiveFocus()
-                        }
-                        event.accepted = true
-                    }
-                    Keys.onReturnPressed: function(event) {
-                        activateButton()
-                        event.accepted = true
-                    }
-
-                    function activateButton() {
-                        if (focusedButton === 0) {
-                            if (game) Rift.launchGame(game.id)
-                        } else if (focusedButton === 1) {
-                            if (game) {
-                                Rift.setGameFavorite(game.id, !game.favorite)
-                                root.game = Rift.getGame(game.id)
-                            }
-                        } else if (focusedButton === 2) {
-                            if (achievements && achievements.id) {
-                                root.achievementsModalVisible = true
-                            }
-                        }
-                    }
+                // Last played
+                Text {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    property var lastPlayedDate: game?.lastPlayed ?? null
+                    text: lastPlayedDate ? "Last played: " + Qt.formatDateTime(lastPlayedDate, "MMM d, yyyy") : ""
+                    color: "#666"
+                    font.pixelSize: 13
+                    visible: lastPlayedDate !== null && text !== ""
                 }
             }
 
             // Right column - All metadata (9 cols)
             RiftCol {
                 span: 9
-                spacing: 20
 
-                // Game title (hidden if boxart is available)
-                Text {
+                Flickable {
                     width: parent.width
-                    text: game?.name ?? ""
-                    color: "#fff"
-                    font.pixelSize: 48
-                    font.bold: true
-                    wrapMode: Text.WordWrap
-                }
+                    height: root.height - 48
+                    contentWidth: width
+                    contentHeight: metadataColumn.height
+                    clip: true
+                    boundsBehavior: Flickable.StopAtBounds
+
+                    Column {
+                        id: metadataColumn
+                        width: parent.width
+                        spacing: 20
+
+                        // Game title (hidden if boxart is available)
+                        Text {
+                            width: parent.width
+                            text: game?.name ?? ""
+                            color: "#fff"
+                            font.pixelSize: 48
+                            font.bold: true
+                            wrapMode: Text.WordWrap
+                        }
 
                 // Subtitle with platform (hidden if boxart is available)
                 Text {
@@ -311,7 +234,7 @@ FocusScope {
                 Column {
                     width: parent.width
                     spacing: 8
-                    visible: game?.description
+                    visible: !!(game?.description)
 
                     Text {
                         text: "DESCRIPTION"
@@ -333,12 +256,117 @@ FocusScope {
                     }
                 }
 
-                // Last played
-                Text {
-                    text: game?.lastPlayed ? "Last played: " + Qt.formatDateTime(game.lastPlayed, "MMM d, yyyy") : ""
-                    color: "#666"
-                    font.pixelSize: 13
-                    visible: game?.lastPlayed
+                // Buttons with focus navigation
+                FocusScope {
+                    id: buttonsArea
+                    width: parent.width * 0.6
+                    height: buttonsRow.height
+                    focus: true
+
+                    property int focusedButton: 0
+                    property int buttonCount: achievements && achievements.numAchievements > 0 ? 4 : 3
+
+                    Row {
+                        id: buttonsRow
+                        width: parent.width
+                        spacing: 12
+
+                        // Play button
+                        GameButton {
+                            width: 140
+                            text: "PLAY"
+                            primary: true
+                            focused: buttonsArea.focusedButton === 0 && buttonsArea.activeFocus
+                            onClicked: if (game) Rift.launchGame(game.id)
+                        }
+
+                        // Favorite button
+                        GameButton {
+                            width: 56
+                            text: "♥"
+                            active: game?.favorite ?? false
+                            focused: buttonsArea.focusedButton === 1 && buttonsArea.activeFocus
+                            onClicked: {
+                                if (game) {
+                                    Rift.setGameFavorite(game.id, !game.favorite)
+                                    root.game = Rift.getGame(game.id)
+                                }
+                            }
+                        }
+
+                        // Backlog button
+                        GameButton {
+                            width: 56
+                            text: "▶"
+                            active: game?.backlog ?? false
+                            focused: buttonsArea.focusedButton === 2 && buttonsArea.activeFocus
+                            accentColor: "#3498db"
+                            onClicked: {
+                                if (game) {
+                                    Rift.setGameBacklog(game.id, !game.backlog)
+                                    root.game = Rift.getGame(game.id)
+                                }
+                            }
+                        }
+
+                        // Achievements button
+                        GameButton {
+                            width: 56
+                            text: "★"
+                            focused: buttonsArea.focusedButton === 3 && buttonsArea.activeFocus
+                            activeAccentColor: "#FFD700"
+                            visible: achievements && achievements.numAchievements > 0
+                            onClicked: {
+                                if (achievements && achievements.id) {
+                                    root.achievementsModalVisible = true
+                                }
+                            }
+                        }
+                    }
+
+                    // Keyboard/gamepad navigation
+                    Keys.onLeftPressed: function(event) {
+                        if (focusedButton > 0) focusedButton--
+                        event.accepted = true
+                    }
+                    Keys.onRightPressed: function(event) {
+                        if (focusedButton < buttonCount - 1) {
+                            focusedButton++
+                        } else if (similarGames && similarGames.length > 0) {
+                            similarGamesCarousel.forceActiveFocus()
+                        }
+                        event.accepted = true
+                    }
+                    Keys.onDownPressed: function(event) {
+                        if (similarGames && similarGames.length > 0) {
+                            similarGamesCarousel.forceActiveFocus()
+                        }
+                        event.accepted = true
+                    }
+                    Keys.onReturnPressed: function(event) {
+                        activateButton()
+                        event.accepted = true
+                    }
+
+                    function activateButton() {
+                        if (focusedButton === 0) {
+                            if (game) Rift.launchGame(game.id)
+                        } else if (focusedButton === 1) {
+                            if (game) {
+                                Rift.setGameFavorite(game.id, !game.favorite)
+                                root.game = Rift.getGame(game.id)
+                            }
+                        } else if (focusedButton === 2) {
+                            if (game) {
+                                Rift.setGameBacklog(game.id, !game.backlog)
+                                root.game = Rift.getGame(game.id)
+                            }
+                        } else if (focusedButton === 3) {
+                            if (achievements && achievements.id) {
+                                root.achievementsModalVisible = true
+                            }
+                        }
+                    }
                 }
 
                 // Similar Games Section
@@ -439,7 +467,9 @@ FocusScope {
                             }
                         }
                     }
-                }
+                    } // end Similar Games Column
+                    } // end metadataColumn
+                } // end Flickable
             }
         }
     }
