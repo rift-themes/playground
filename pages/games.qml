@@ -28,6 +28,9 @@ FocusScope {
     property int selectedIndex: initialGameIndex
     property var selectedGame: gamesModel ? gamesModel.get(selectedIndex) : null
 
+    // Theme setting: game card format (cover vs screenshot+logo)
+    property bool showCover: Rift.themeSetting("gameCardFormat") === "cover"
+
     // Background - blurred screenshot of selected game
     Image {
         id: backgroundImage
@@ -79,7 +82,7 @@ FocusScope {
                     model: gamesModel
                     platform: root.platform
                     currentIndex: root.selectedIndex
-                    showCover: true
+                    showCover: root.showCover
 
                     onCurrentIndexChanged: root.selectedIndex = currentIndex
                     onGameActivated: function(game, index) {

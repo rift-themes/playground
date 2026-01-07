@@ -1,0 +1,15 @@
+{
+  "settings": [
+    {
+      "key": "gameCardFormat",
+      "label": "Game Card Format",
+      "description": "How game cards are displayed in the games list",
+      "type": "select",
+      "options": [
+        { "value": "cover", "label": "Cover" },
+        { "value": "screenshot", "label": "Screenshot + Logo" }
+      ],
+      "default": "cover"
+    }
+  ]
+}
