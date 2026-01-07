@@ -32,9 +32,9 @@ FocusScope {
         // Fade transition
         Behavior on source {
             SequentialAnimation {
-                PropertyAnimation { target: backgroundImage; property: "opacity"; to: 0; duration: 150 }
+                PropertyAnimation { target: backgroundImage; property: "opacity"; to: 0; duration: 300 }
                 PropertyAction { target: backgroundImage; property: "source" }
-                PropertyAnimation { target: backgroundImage; property: "opacity"; to: 1; duration: 150 }
+                PropertyAnimation { target: backgroundImage; property: "opacity"; to: 1; duration: 300 }
             }
         }
     }

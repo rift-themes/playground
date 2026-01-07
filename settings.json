@@ -1,6 +1,33 @@
 {
   "settings": [
     {
+      "key": "homeLayout",
+      "label": "Home Layout",
+      "description": "How platforms are displayed on the home screen",
+      "type": "select",
+      "options": [
+        { "value": "default", "label": "Default" },
+        { "value": "grid", "label": "Grid" }
+      ],
+      "default": "default"
+    },
+    {
+      "key": "gamesLayout",
+      "label": "Games Layout",
+      "description": "How games list is displayed",
+      "type": "select",
+      "options": [{ "value": "default", "label": "Default" }],
+      "default": "default"
+    },
+    {
+      "key": "gameLayout",
+      "label": "Game Detail Layout",
+      "description": "How game details are displayed",
+      "type": "select",
+      "options": [{ "value": "default", "label": "Default" }],
+      "default": "default"
+    },
+    {
       "key": "gameCardFormat",
       "label": "Game Card Format",
       "description": "How game cards are displayed in the games list",

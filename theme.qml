@@ -9,6 +9,39 @@ FocusScope {
     id: root
     focus: true
 
+    // Theme settings for page layouts
+    property string homeLayout: Rift.themeSetting("homeLayout") ?? "default"
+    property string gamesLayout: Rift.themeSetting("gamesLayout") ?? "default"
+    property string gameLayout: Rift.themeSetting("gameLayout") ?? "default"
+
+    // Build page overrides based on settings
+    // Maps: "default" -> "page", "second" -> "page-second", "grid" -> "page-grid"
+    function buildPageOverrides() {
+        var overrides = {}
+
+        if (homeLayout !== "default") {
+            overrides["home"] = "home-" + homeLayout
+        }
+        if (gamesLayout !== "default") {
+            overrides["games"] = "games-" + gamesLayout
+        }
+        if (gameLayout !== "default") {
+            overrides["game"] = "game-" + gameLayout
+        }
+
+        return overrides
+    }
+
+    // Listen for setting changes
+    Connections {
+        target: Rift
+        function onThemeSettingChanged(key, value) {
+            if (key === "homeLayout") root.homeLayout = value
+            else if (key === "gamesLayout") root.gamesLayout = value
+            else if (key === "gameLayout") root.gameLayout = value
+        }
+    }
+
     // Background
     Rectangle {
         anchors.fill: parent
@@ -20,6 +53,9 @@ FocusScope {
         id: router
         anchors.fill: parent
         focus: true
+
+        // Override pages based on layout settings
+        pageOverrides: root.buildPageOverrides()
     }
 
     // Footer - currentScreen auto-detected from Rift.navigation
