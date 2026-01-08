@@ -37,6 +37,13 @@
         { "value": "screenshot", "label": "Screenshot + Logo" }
       ],
       "default": "cover"
+    },
+    {
+      "key": "showGameInfo",
+      "label": "Show Game Info Panel",
+      "description": "Show the game information panel on the right side of the games list",
+      "type": "toggle",
+      "default": true
     }
   ]
 }

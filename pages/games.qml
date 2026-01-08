@@ -28,8 +28,9 @@ FocusScope {
     property int selectedIndex: initialGameIndex
     property var selectedGame: gamesModel ? gamesModel.get(selectedIndex) : null
 
-    // Theme setting: game card format (cover vs screenshot+logo)
+    // Theme settings
     property bool showCover: Rift.themeSetting("gameCardFormat") === "cover"
+    property bool showGameInfo: Rift.themeSetting("showGameInfo") !== false
 
     // Background - blurred screenshot of selected game
     Image {
@@ -58,9 +59,9 @@ FocusScope {
         RiftRow {
             gutter: 24
 
-            // Left column - Games grid (8 cols)
+            // Left column - Games grid (8 cols when info shown, 12 when hidden)
             RiftCol {
-                span: 8
+                span: root.showGameInfo ? 8 : 12
                 autoHeight: true
 
                 // Section title
@@ -105,10 +106,11 @@ FocusScope {
                 }
             }
 
-            // Right column - Game metadata (4 cols)
+            // Right column - Game metadata (4 cols) - hidden when showGameInfo is false
             RiftCol {
                 span: 4
                 autoHeight: true
+                visible: root.showGameInfo
 
                 // Metadata panel
                 Rectangle {
