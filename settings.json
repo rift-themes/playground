@@ -16,7 +16,10 @@
       "label": "Games Layout",
       "description": "How games list is displayed",
       "type": "select",
-      "options": [{ "value": "default", "label": "Default" }],
+      "options": [
+        { "value": "default", "label": "Grid" },
+        { "value": "carousel", "label": "Carousel" }
+      ],
       "default": "default"
     },
     {
