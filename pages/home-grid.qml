@@ -9,6 +9,10 @@ FocusScope {
     id: root
     focus: true
 
+    // Fonts
+    FontLoader { id: headlineFont; source: "../fonts/Nulshock Bd.otf" }
+    property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
+
     // Initial platform index (restored from theme)
     property int initialPlatformIndex: 0
     onInitialPlatformIndexChanged: {
@@ -66,7 +70,7 @@ FocusScope {
                     text: "Platforms"
                     color: "#fff"
                     font.pixelSize: 32
-                    font.bold: true
+                    font.family: root.fontHeadline
                     bottomPadding: 24
                 }
 

@@ -8,6 +8,10 @@ Rectangle {
     id: root
     color: "#031921"
 
+    // Fonts
+    FontLoader { id: headlineFont; source: "../fonts/Nulshock Bd.otf" }
+    property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
+
     // Game properties (set by native code)
     property int gameId: 0
     property string gameTitle: ""
@@ -67,7 +71,7 @@ Rectangle {
                     text: root.gameTitle
                     color: "#FFFFFF"
                     font.pixelSize: 22
-                    font.bold: true
+                    font.family: root.fontHeadline
                     elide: Text.ElideRight
                     width: Math.min(implicitWidth, root.width - 32)
                 }

@@ -9,6 +9,10 @@ FocusScope {
     id: root
     focus: true
 
+    // Fonts
+    FontLoader { id: headlineFont; source: "fonts/Nulshock Bd.otf" }
+    property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
+
     // Theme settings for page layouts
     property string homeLayout: Rift.themeSetting("homeLayout") ?? "default"
     property string gamesLayout: Rift.themeSetting("gamesLayout") ?? "default"

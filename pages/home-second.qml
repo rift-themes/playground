@@ -8,6 +8,10 @@ Rectangle {
     id: root
     color: "#031921"
 
+    // Fonts
+    FontLoader { id: headlineFont; source: "../fonts/Nulshock Bd.otf" }
+    property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
+
     // Platform properties (set by native code)
     property int platformId: 0
     property string platformName: ""
@@ -68,7 +72,7 @@ Rectangle {
                         text: root.platformManufacturer
                         color: "#e94560"
                         font.pixelSize: 24
-                        font.bold: true
+                        font.family: root.fontHeadline
                         visible: root.platformManufacturer !== ""
                     }
 

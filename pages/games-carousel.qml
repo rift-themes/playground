@@ -11,6 +11,10 @@ FocusScope {
     id: root
     focus: true
 
+    // Fonts
+    FontLoader { id: headlineFont; source: "../fonts/Nulshock Bd.otf" }
+    property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
+
     // Initial game index (restored from theme)
     property int initialGameIndex: 0
     onInitialGameIndexChanged: {
@@ -60,7 +64,7 @@ FocusScope {
             text: platform?.displayName ?? "Games"
             color: "#fff"
             font.pixelSize: 32
-            font.bold: true
+            font.family: root.fontHeadline
             anchors.horizontalCenter: parent.horizontalCenter
         }
 
@@ -219,7 +223,7 @@ FocusScope {
                         text: selectedGame?.name ?? ""
                         color: "#fff"
                         font.pixelSize: 24
-                        font.bold: true
+                        font.family: root.fontHeadline
                         wrapMode: Text.WordWrap
                         maximumLineCount: 2
                         elide: Text.ElideRight

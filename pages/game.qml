@@ -10,6 +10,10 @@ FocusScope {
     id: root
     focus: true
 
+    // Fonts
+    FontLoader { id: headlineFont; source: "../fonts/Nulshock Bd.otf" }
+    property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
+
     // Game passed from parent
     property var game: null
 
@@ -183,7 +187,7 @@ FocusScope {
                             text: game?.name ?? ""
                             color: "#fff"
                             font.pixelSize: 48
-                            font.bold: true
+                            font.family: root.fontHeadline
                             wrapMode: Text.WordWrap
                         }
 
