@@ -116,6 +116,39 @@ FocusScope {
                     visible: game?.rating > 0
                 }
 
+                // Custom emulator indicator
+                Row {
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    spacing: 8
+                    visible: game?.emulatorId && game.emulatorId !== ""
+
+                    Rectangle {
+                        width: 32
+                        height: 32
+                        radius: 6
+                        color: "#2a2a3a"
+                        border.color: "#9b59b6"
+                        border.width: 1
+
+                        Image {
+                            anchors.centerIn: parent
+                            width: 24
+                            height: 24
+                            source: game?.emulatorId ? Rift.getEmulatorIcon(game.emulatorId) : ""
+                            fillMode: Image.PreserveAspectFit
+                            smooth: true
+                        }
+                    }
+
+                    Text {
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: game?.emulatorId ?? ""
+                        color: "#9b59b6"
+                        font.pixelSize: 12
+                        font.bold: true
+                    }
+                }
+
                 // Last played
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
@@ -372,7 +405,7 @@ FocusScope {
                                 Rift.setGameBacklog(game.id, !game.backlog)
                                 root.game = Rift.getGame(game.id)
                             }
-                        } else if (focusedButton === 3) {
+                        } else if (focusedButton === 3 && achievements && achievements.numAchievements > 0) {
                             if (achievements && achievements.id) {
                                 root.achievementsModalVisible = true
                             }
