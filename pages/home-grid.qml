@@ -88,6 +88,15 @@ FocusScope {
                     currentIndex: root.initialPlatformIndex
                     clip: true
 
+                    // Sync grid index with model (auto-updates secondary display)
+                    onCurrentIndexChanged: {
+                        Rift.platforms.currentIndex = currentIndex
+                    }
+
+                    Component.onCompleted: {
+                        Rift.platforms.currentIndex = currentIndex
+                    }
+
                     highlight: Item {}
                     highlightFollowsCurrentItem: false
 

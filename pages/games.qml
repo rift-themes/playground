@@ -32,9 +32,17 @@ FocusScope {
     property int selectedIndex: initialGameIndex
     property var selectedGame: gamesModel ? gamesModel.get(selectedIndex) : null
 
+    // Auto-update secondary display when selected game changes
+    onSelectedGameChanged: {
+        if (selectedGame?.id) {
+            Rift.selectedGameId = selectedGame.id
+        }
+    }
+
     // Theme settings
     property bool showCover: Rift.themeSetting("gameCardFormat") === "cover"
-    property bool showGameInfo: Rift.themeSetting("showGameInfo") !== false
+    // Hide game info panel if secondary display is active (metadata shown there instead)
+    property bool showGameInfo: Rift.themeSetting("showGameInfo") !== false && !Rift.secondaryDisplayActive
 
     // Background - blurred screenshot of selected game
     Image {

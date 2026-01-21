@@ -70,6 +70,15 @@ FocusScope {
                     model: Rift.platforms
                     currentIndex: root.initialPlatformIndex
 
+                    // Sync carousel index with model (auto-updates secondary display)
+                    onCurrentIndexChanged: {
+                        Rift.platforms.currentIndex = currentIndex
+                    }
+
+                    Component.onCompleted: {
+                        Rift.platforms.currentIndex = currentIndex
+                    }
+
                     // Type & layout
                     carouselType: "horizontal"
                     maxItemCount: 3
