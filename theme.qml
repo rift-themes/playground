@@ -18,6 +18,9 @@ FocusScope {
     property string gamesLayout: Rift.themeSetting("gamesLayout") ?? "default"
     property string gameLayout: Rift.themeSetting("gameLayout") ?? "default"
 
+    // Page transition setting
+    property string pageTransition: Rift.themeSetting("pageTransition") ?? "fade"
+
     // Build page overrides based on settings
     // Maps: "default" -> "page", "second" -> "page-second", "grid" -> "page-grid"
     function buildPageOverrides() {
@@ -43,6 +46,7 @@ FocusScope {
             if (key === "homeLayout") root.homeLayout = value
             else if (key === "gamesLayout") root.gamesLayout = value
             else if (key === "gameLayout") root.gameLayout = value
+            else if (key === "pageTransition") root.pageTransition = value
         }
     }
 
@@ -60,6 +64,9 @@ FocusScope {
 
         // Override pages based on layout settings
         pageOverrides: root.buildPageOverrides()
+
+        // Page transition animation
+        transition: root.pageTransition
     }
 
     // Footer - currentScreen auto-detected from Rift.navigation

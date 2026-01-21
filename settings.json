@@ -1,6 +1,20 @@
 {
   "settings": [
     {
+      "key": "pageTransition",
+      "label": "Page Transition",
+      "description": "Animation style when navigating between pages",
+      "type": "select",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "fade", "label": "Fade" },
+        { "value": "slide", "label": "Slide" },
+        { "value": "scale", "label": "Scale + Fade" },
+        { "value": "slideFade", "label": "Slide + Fade" }
+      ],
+      "default": "slide"
+    },
+    {
       "key": "homeLayout",
       "label": "Home Layout",
       "description": "How platforms are displayed on the home screen",
@@ -20,14 +34,6 @@
         { "value": "default", "label": "Grid" },
         { "value": "carousel", "label": "Carousel" }
       ],
-      "default": "default"
-    },
-    {
-      "key": "gameLayout",
-      "label": "Game Detail Layout",
-      "description": "How game details are displayed",
-      "type": "select",
-      "options": [{ "value": "default", "label": "Default" }],
       "default": "default"
     },
     {
