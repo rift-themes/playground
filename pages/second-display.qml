@@ -51,13 +51,12 @@ Rectangle {
         anchors.fill: parent
         visible: root.currentPage === "home"
 
-        // Platform logo - large centered
+        // Platform logo - almost fullscreen
         Image {
             id: platformLogoImage
-            anchors.centerIn: parent
-            anchors.verticalCenterOffset: -60
-            width: parent.width * 0.6
-            height: parent.height * 0.5
+            anchors.fill: parent
+            anchors.margins: 4
+            anchors.bottomMargin: 60
             source: root.platformLogo
             fillMode: Image.PreserveAspectFit
             visible: root.platformLogo !== ""
@@ -67,7 +66,7 @@ Rectangle {
         // Rift logo fallback when no platform logo
         Image {
             anchors.centerIn: parent
-            width: parent.width * 0.4
+            width: parent.width * 0.5
             height: width
             source: "qrc:/icons/rift-logo.png"
             fillMode: Image.PreserveAspectFit
@@ -79,15 +78,15 @@ Rectangle {
         Column {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: 40
-            spacing: 8
+            anchors.bottomMargin: 16
+            spacing: 4
             visible: root.platformName !== ""
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.platformReleaseYear
                 color: "#e94560"
-                font.pixelSize: 18
+                font.pixelSize: 32
                 font.family: root.fontHeadline
                 visible: text !== ""
             }
@@ -96,11 +95,11 @@ Rectangle {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.platformDescription
                 color: "#AAAAAA"
-                font.pixelSize: 14
-                width: root.width - 80
+                font.pixelSize: 24
+                width: root.width - 40
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
-                maximumLineCount: 3
+                maximumLineCount: 2
                 elide: Text.ElideRight
                 visible: text !== ""
             }
