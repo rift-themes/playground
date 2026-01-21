@@ -24,6 +24,9 @@ FocusScope {
     // Similar games
     property var similarGames: []
 
+    // Compact layout for standard (4:3) or square (1:1) screens (hide left column)
+    property bool isCompactScreen: Rift.isStandard || Rift.isSquare
+
     // Load achievements and similar games when game changes
     onGameChanged: {
         if (game && game.platformId) {
@@ -91,10 +94,11 @@ FocusScope {
         RiftRow {
             gutter: 48
 
-            // Left column - Boxart and quick info (3 cols)
+            // Left column - Boxart and quick info (3 cols) - hidden on compact screens
             RiftCol {
                 span: 3
                 spacing: 24
+                visible: !root.isCompactScreen
 
                 // Boxart + Rating stars (no spacing between them)
                 Image {
@@ -164,9 +168,9 @@ FocusScope {
                 }
             }
 
-            // Right column - All metadata (9 cols)
+            // Right column - All metadata (9 cols, or 12 on compact screens)
             RiftCol {
-                span: 9
+                span: root.isCompactScreen ? 12 : 9
 
                 Flickable {
                     id: metadataFlickable
