@@ -119,16 +119,32 @@ Rectangle {
             height: width
             source: "qrc:/icons/rift-logo.png"
             fillMode: Image.PreserveAspectFit
-            visible: root.gameScreenshot === ""
+            visible: root.gameScreenshot === "" && root.gameVideo === ""
             opacity: 0.8
         }
 
-        // Screenshot display
+        // Video player - loaded dynamically only when video available
+        Loader {
+            id: gamesVideoLoader
+            anchors.fill: parent
+            active: root.currentPage === "games" && root.gameVideo !== ""
+
+            sourceComponent: Video {
+                anchors.fill: parent
+                source: root.gameVideo
+                fillMode: VideoOutput.PreserveAspectFit
+                loops: MediaPlayer.Infinite
+
+                Component.onCompleted: play()
+            }
+        }
+
+        // Screenshot fallback (when no video)
         Image {
             anchors.fill: parent
             source: root.gameScreenshot
             fillMode: Image.PreserveAspectFit
-            visible: root.gameScreenshot !== ""
+            visible: !gamesVideoLoader.active && root.gameScreenshot !== ""
             asynchronous: true
         }
 
@@ -163,48 +179,28 @@ Rectangle {
         anchors.fill: parent
         visible: root.currentPage === "game"
 
-        // Video player - loaded dynamically only on game page
-        Loader {
-            id: videoLoader
+        // Only show description - centered on screen
+        Text {
             anchors.fill: parent
-            active: root.currentPage === "game" && root.gameVideo !== ""
-
-            sourceComponent: Video {
-                anchors.fill: parent
-                source: root.gameVideo
-                fillMode: VideoOutput.PreserveAspectFit
-                loops: MediaPlayer.Infinite
-
-                Component.onCompleted: play()
-            }
+            anchors.margins: 24
+            text: root.gameDescription
+            color: "#CCCCCC"
+            font.pixelSize: 28
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            wrapMode: Text.WordWrap
+            elide: Text.ElideRight
+            visible: root.gameDescription !== ""
         }
 
-        // Screenshot fallback (when no video)
-        Image {
-            anchors.fill: parent
-            source: root.gameScreenshot
-            fillMode: Image.PreserveAspectFit
-            visible: !videoLoader.active && root.gameScreenshot !== ""
-            asynchronous: true
-        }
-
-        // Boxart fallback
-        Image {
-            anchors.fill: parent
-            source: root.gameBoxart
-            fillMode: Image.PreserveAspectFit
-            visible: !videoLoader.active && root.gameScreenshot === "" && root.gameBoxart !== ""
-            asynchronous: true
-        }
-
-        // Title fallback
+        // Fallback when no description
         Text {
             anchors.centerIn: parent
             text: root.gameTitle
-            color: "#ffffff"
-            font.pixelSize: 32
+            color: "#666666"
+            font.pixelSize: 24
             font.family: root.fontHeadline
-            visible: !videoLoader.active && root.gameScreenshot === "" && root.gameBoxart === ""
+            visible: root.gameDescription === ""
         }
     }
 }

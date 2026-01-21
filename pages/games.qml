@@ -113,6 +113,7 @@ FocusScope {
                             game: modelData
                             isSelected: index === gamesList.currentIndex
                             showCover: gamesList.showCover
+                            showVideo: !Rift.secondaryDisplayActive  // Video on 2nd screen instead
                         }
                     }
                 }
