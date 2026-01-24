@@ -9,6 +9,12 @@ FocusScope {
     id: root
     focus: true
 
+    // Footer customization (read by global RiftFooter in main.qml)
+    property color footerBackgroundColor: "#000"
+    property color footerTextColor: "#AAAAAA"
+    property real footerBackgroundOpacity: 0.85
+    property bool footerVisible: true
+
     // Fonts
     FontLoader { id: headlineFont; source: "fonts/Nulshock Bd.otf" }
     property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
@@ -67,13 +73,4 @@ FocusScope {
         transition: root.pageTransition
     }
 
-    // Footer - currentScreen auto-detected from Rift.navigation
-    RiftFooter {
-        id: footer
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        height: 54 
-        backgroundOpacity: Rift.navigation?.currentPage === "home" ? 0.5 : 1.0
-    }
 }
