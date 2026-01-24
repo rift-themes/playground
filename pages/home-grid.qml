@@ -98,7 +98,7 @@ FocusScope {
                     }
 
                     highlight: Item {}
-                    highlightFollowsCurrentItem: false
+                    highlightFollowsCurrentItem: true
 
                     delegate: Item {
                         id: delegateRoot
