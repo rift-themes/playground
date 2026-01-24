@@ -12,7 +12,7 @@
         { "value": "scale", "label": "Scale + Fade" },
         { "value": "slideFade", "label": "Slide + Fade" }
       ],
-      "default": "slide"
+      "default": "slideFade"
     },
     {
       "key": "homeLayout",
@@ -20,7 +20,7 @@
       "description": "How platforms are displayed on the home screen",
       "type": "select",
       "options": [
-        { "value": "default", "label": "Default" },
+        { "value": "default", "label": "Carousel" },
         { "value": "grid", "label": "Grid" }
       ],
       "default": "default"

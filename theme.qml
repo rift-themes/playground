@@ -73,7 +73,7 @@ FocusScope {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        height: 38
+        height: 54 
         backgroundOpacity: Rift.navigation?.currentPage === "home" ? 0.5 : 1.0
     }
 }
