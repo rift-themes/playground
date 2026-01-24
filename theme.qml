@@ -21,20 +21,18 @@ FocusScope {
     // Page transition setting
     property string pageTransition: Rift.themeSetting("pageTransition") ?? "fade"
 
-    // Build page overrides based on settings
-    // Maps: "default" -> "page", "second" -> "page-second", "grid" -> "page-grid"
-    function buildPageOverrides() {
+    // Page overrides as a reactive binding
+    // Using direct property references so QML tracks dependencies
+    property var pageOverridesComputed: {
         var overrides = {}
+        // Reference the properties directly so QML knows to re-evaluate
+        var h = homeLayout
+        var g = gamesLayout
+        var gm = gameLayout
 
-        if (homeLayout !== "default") {
-            overrides["home"] = "home-" + homeLayout
-        }
-        if (gamesLayout !== "default") {
-            overrides["games"] = "games-" + gamesLayout
-        }
-        if (gameLayout !== "default") {
-            overrides["game"] = "game-" + gameLayout
-        }
+        if (h !== "default") overrides["home"] = "home-" + h
+        if (g !== "default") overrides["games"] = "games-" + g
+        if (gm !== "default") overrides["game"] = "game-" + gm
 
         return overrides
     }
@@ -62,8 +60,8 @@ FocusScope {
         anchors.fill: parent
         focus: true
 
-        // Override pages based on layout settings
-        pageOverrides: root.buildPageOverrides()
+        // Override pages based on layout settings (reactive binding)
+        pageOverrides: root.pageOverridesComputed
 
         // Page transition animation
         transition: root.pageTransition
