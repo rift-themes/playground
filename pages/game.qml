@@ -42,7 +42,7 @@ FocusScope {
     Image {
         id: backgroundImage
         anchors.fill: parent
-        source: game?.fanart ?? game?.screenshot ?? ""
+        source: Rift.imageSource(game?.fanart ?? game?.screenshot ?? "")
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
 
@@ -108,7 +108,7 @@ FocusScope {
                     height: status === Image.Ready && implicitWidth > 0
                         ? width * (implicitHeight / implicitWidth)
                         : width * 1.4
-                    source: game?.boxart ?? ""
+                    source: Rift.imageSource(game?.boxart ?? "")
                     fillMode: Image.PreserveAspectFit
                     asynchronous: true
 
@@ -569,6 +569,12 @@ FocusScope {
                 } else if (similarGamesCarousel.activeFocus) {
                     similarGamesCarousel.itemActivated(similarGamesCarousel.currentIndex)
                 }
+            }
+        }
+        // Refresh game data when artwork is updated
+        function onGameUpdated(gameId) {
+            if (game && game.id === gameId) {
+                root.game = Rift.getGame(gameId)
             }
         }
     }
