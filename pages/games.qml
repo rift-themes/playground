@@ -91,7 +91,7 @@ FocusScope {
                 RiftGamesList {
                     id: gamesList
                     width: parent.width
-                    height: root.height - 100
+                    height: root.height * 0.92 - 100
                     focus: true
 
                     model: gamesModel
