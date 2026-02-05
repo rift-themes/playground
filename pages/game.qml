@@ -161,10 +161,13 @@ FocusScope {
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
                     property var lastPlayedDate: game?.lastPlayed ?? null
-                    text: lastPlayedDate ? "Last played: " + Qt.formatDateTime(lastPlayedDate, "MMM d, yyyy") : ""
+                    property bool hasValidDate: lastPlayedDate !== null && lastPlayedDate !== undefined
+                        && !isNaN(new Date(lastPlayedDate).getTime())
+                        && new Date(lastPlayedDate).getFullYear() > 1970
+                    text: hasValidDate ? "Last played: " + Qt.formatDateTime(lastPlayedDate, "MMM d, yyyy") : ""
                     color: "#666"
                     font.pixelSize: 13
-                    visible: lastPlayedDate !== null && text !== ""
+                    visible: hasValidDate
                 }
             }
 
@@ -301,10 +304,8 @@ FocusScope {
                         width: parent.width
                         text: {
                             var desc = game?.description ?? ""
-                            var sentences = desc.match(/[^.!?]+[.!?]+/g)
-                            if (sentences && sentences.length > 2)
-                                return sentences.slice(0, 2).join("").trim()
-                            return desc
+                            var dot = desc.indexOf(".")
+                            return dot >= 0 ? desc.substring(0, dot + 1) : desc
                         }
                         color: "#ccc"
                         font.pixelSize: 15
