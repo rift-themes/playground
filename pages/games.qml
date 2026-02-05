@@ -80,7 +80,7 @@ FocusScope {
 
                 // Section title
                 Text {
-                    text: platform?.displayName ?? "Games"
+                    text: (platform?.displayName ?? "Games").replace(/\b(Nintendo|Sega|Sony)\b\s*/gi, "").trim()
                     color: "#fff"
                     font.pixelSize: 28
                     font.family: root.fontHeadline
@@ -139,19 +139,6 @@ FocusScope {
                         anchors.fill: parent
                         anchors.margins: 20
                         spacing: 16
-
-                        // Boxart
-                        Image {
-                            width: parent.width
-                            height: Math.min(
-                                implicitHeight > 0 ? (width / implicitWidth * implicitHeight) : width,
-                                root.height * 0.4
-                            )
-                            source: selectedGame?.boxart ?? ""
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: true
-                            horizontalAlignment: Image.AlignHCenter
-                        }
 
                         // Game title
                         Text {
