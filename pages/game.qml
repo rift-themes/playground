@@ -299,13 +299,17 @@ FocusScope {
 
                     Text {
                         width: parent.width
-                        text: game?.description ?? ""
+                        text: {
+                            var desc = game?.description ?? ""
+                            var sentences = desc.match(/[^.!?]+[.!?]+/g)
+                            if (sentences && sentences.length > 2)
+                                return sentences.slice(0, 2).join("").trim()
+                            return desc
+                        }
                         color: "#ccc"
                         font.pixelSize: 15
                         lineHeight: 1.4
                         wrapMode: Text.WordWrap
-                        maximumLineCount: 6
-                        elide: Text.ElideRight
                     }
                 }
 
