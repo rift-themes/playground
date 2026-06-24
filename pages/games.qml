@@ -16,10 +16,7 @@ FocusScope {
 
     // Initial game index (restored from theme / back-navigation)
     property int initialGameIndex: 0
-    onInitialGameIndexChanged: {
-        console.log("[games] initialGameIndex ->", initialGameIndex)
-        Qt.callLater(restoreSelection)
-    }
+    onInitialGameIndexChanged: Qt.callLater(restoreSelection)
 
     // Platform passed from parent (or default to first)
     property var platform: Rift.platforms.get(0)
@@ -35,12 +32,9 @@ FocusScope {
     // Restore the selected game when returning from the detail page.
     // Deferred + retried on model load so it wins the GridView's reset-to-0 during (re)loading.
     function restoreSelection() {
-        if (!gamesModel || gamesModel.count <= 0) {
-            console.log("[games] restoreSelection: model not ready (count=" + (gamesModel ? gamesModel.count : "null") + ")")
+        if (!gamesModel || gamesModel.count <= 0)
             return  // retried on countChanged
-        }
         var idx = Math.max(0, Math.min(initialGameIndex, gamesModel.count - 1))
-        console.log("[games] restoreSelection -> idx=" + idx + " (count=" + gamesModel.count + ")")
         gamesList.currentIndex = idx
         gamesList.positionAtIndex(idx)
     }
