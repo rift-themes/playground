@@ -1,11 +1,10 @@
 import QtQuick
-import QtMultimedia
 import Rift 1.0
 
 /**
- * Games Carousel - Carousel view of games for a platform
- * Top: Horizontal carousel of game covers
- * Bottom: Game information panel
+ * Games - Grid view of games for a platform
+ * Left: 8-column grid of game cards (screenshot bg + wheel overlay)
+ * Right: 4-column metadata panel for selected game
  */
 FocusScope {
     id: root
@@ -19,7 +18,7 @@ FocusScope {
     property int initialGameIndex: 0
     onInitialGameIndexChanged: {
         selectedIndex = initialGameIndex
-        gamesCarousel.goToIndex(initialGameIndex)
+        gamesList.positionAtIndex(initialGameIndex)
     }
 
     // Platform passed from parent (or default to first)
@@ -33,8 +32,19 @@ FocusScope {
     property int selectedIndex: initialGameIndex
     property var selectedGame: gamesModel ? gamesModel.get(selectedIndex) : null
 
+    // Auto-update secondary display when selected game changes
+    onSelectedGameChanged: {
+        if (selectedGame?.id) {
+            Rift.selectedGameId = selectedGame.id
+        }
+    }
+
     // Theme settings
     property bool showCover: Rift.themeSetting("gameCardFormat") === "cover"
+    // Hide game info panel if secondary display is active (metadata shown there instead)
+    property bool showGameInfo: Rift.themeSetting("showGameInfo") !== false && !Rift.secondaryDisplayActive
+    // Show video in cards only when no secondary display (video plays there instead)
+    property bool showCardVideo: !Rift.secondaryDisplayActive
 
     // Background - blurred screenshot of selected game
     Image {
@@ -50,243 +60,183 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         color: "#000000"
-        opacity: 0.5
+        opacity: 0.6
     }
 
-    // Main layout
-    Column {
-        anchors.fill: parent
-        anchors.margins: 40
-        spacing: 30
+    // Main container
+    RiftContainer {
+        id: container
+        fluid: true
+        paddingX: 24
+        paddingY: 24
 
-        // Platform title
-        Text {
-            text: platform?.displayName ?? "Games"
-            color: "#fff"
-            font.pixelSize: 32
-            font.family: root.fontHeadline
-            anchors.horizontalCenter: parent.horizontalCenter
-        }
+        RiftRow {
+            gutter: 24
 
-        // Games carousel (top section - 50% height)
-        Item {
-            width: parent.width
-            height: parent.height * 0.45
+            // Left column - Games grid (8 cols when info shown, 12 when hidden)
+            RiftCol {
+                span: root.showGameInfo ? 8 : 12
+                autoHeight: true
 
-            RiftCarousel {
-                id: gamesCarousel
-                anchors.fill: parent
-                focus: true
+                // Section title
+                Text {
+                    text: (platform?.displayName ?? "Games").replace(/\b(Nintendo|Sega|Sony)\b\s*/gi, "").trim()
+                    color: "#fff"
+                    font.pixelSize: 28
+                    font.family: root.fontHeadline
+                    bottomPadding: 16
+                }
 
-                model: gamesModel
-                currentIndex: root.selectedIndex
+                // Games grid
+                RiftGamesList {
+                    id: gamesList
+                    width: parent.width
+                    height: root.height * 0.92 - 100
+                    focus: true
 
-                // Carousel settings
-                carouselType: "horizontal"
-                itemSizeX: 0.12
-                itemSizeY: 0.8
-                itemScale: 1.3
-                maxItemCount: 9
-                unfocusedItemOpacity: 0.6
+                    model: gamesModel
+                    platform: root.platform
+                    currentIndex: root.selectedIndex
+                    showCover: root.showCover
 
-                onCurrentIndexChanged: root.selectedIndex = currentIndex
-                onItemActivated: function(index) {
-                    var game = gamesModel.get(index)
-                    if (game) {
+                    onCurrentIndexChanged: root.selectedIndex = currentIndex
+                    onGameActivated: function(game, index) {
                         Rift.navigation.push("game", { game: game, gameIndex: index })
                     }
-                }
 
-                delegate: Component {
-                    Item {
-                        property var modelData
-                        property int itemIndex
-                        property bool isSelected
-
+                    // Custom delegate (optional - uses RiftGameCard by default)
+                    delegate: Component {
                         RiftGameCard {
-                            anchors.fill: parent
+                            required property var modelData
+                            required property int index
+
+                            width: gamesList.cellWidth - 8
+                            height: gamesList.cellHeight - 8
                             game: modelData
-                            showCover: root.showCover
-                            showVideo: false
-                            isSelected: parent.isSelected
+                            isSelected: index === gamesList.currentIndex
+                            showCover: gamesList.showCover
+                            showVideo: root.showCardVideo  // Video on 2nd screen instead
                         }
                     }
                 }
             }
-        }
 
-        // Game info panel (bottom section)
-        Rectangle {
-            width: parent.width
-            height: parent.height * 0.4
-            color: "#1a1a2e"
-            radius: 16
-            opacity: 0.95
+            // Right column - Game metadata (4 cols) - hidden when showGameInfo is false
+            RiftCol {
+                span: 4
+                autoHeight: true
+                visible: root.showGameInfo
 
-            Row {
-                anchors.fill: parent
-                anchors.margins: 24
-                spacing: 24
+                // Metadata panel
+                Rectangle {
+                    width: parent.width
+                    height: root.height - 80
+                    color: "#1a1a2e"
+                    radius: 12
+                    opacity: 0.9
 
-                // Left: Artwork (opposite of carousel)
-                Item {
-                    id: artworkContainer
-                    width: parent.height * 1.2
-                    height: parent.height
+                    Column {
+                        anchors.fill: parent
+                        anchors.margins: 20
+                        spacing: 16
 
-                    property bool shouldPlayVideo: false
+                        // Game title
+                        Text {
+                            width: parent.width
+                            text: selectedGame?.name ?? ""
+                            color: "#fff"
+                            font.pixelSize: 20
+                            font.family: root.fontHeadline
+                            wrapMode: Text.WordWrap
+                            horizontalAlignment: Text.AlignHCenter
+                        }
 
-                    // Video delay timer
-                    Timer {
-                        id: videoDelayTimer
-                        interval: 500
-                        onTriggered: {
-                            if (selectedGame?.video) {
-                                artworkContainer.shouldPlayVideo = true
+                        // Separator
+                        Rectangle {
+                            width: parent.width
+                            height: 1
+                            color: "#444"
+                        }
+
+                        // Metadata grid
+                        Column {
+                            width: parent.width
+                            spacing: 8
+
+                            // Genre
+                            MetadataRow {
+                                label: "Genre"
+                                value: selectedGame?.genre ?? "-"
+                            }
+
+                            // Developer
+                            MetadataRow {
+                                label: "Developer"
+                                value: selectedGame?.developer ?? "-"
+                            }
+
+                            // Publisher
+                            MetadataRow {
+                                label: "Publisher"
+                                value: selectedGame?.publisher ?? "-"
+                            }
+
+                            // Release date
+                            MetadataRow {
+                                label: "Released"
+                                value: selectedGame?.releaseDateFormatted ?? "-"
+                            }
+
+                            // Players
+                            MetadataRow {
+                                label: "Players"
+                                value: selectedGame?.players ?? "-"
+                            }
+
+                            // Rating
+                            MetadataRow {
+                                label: "Rating"
+                                value: selectedGame?.ratingFormatted ?? "-"
                             }
                         }
-                    }
 
-                    // Reset video when game changes
-                    Connections {
-                        target: root
-                        function onSelectedGameChanged() {
-                            artworkContainer.shouldPlayVideo = false
-                            videoDelayTimer.restart()
+                        // Description
+                        Text {
+                            width: parent.width
+                            text: selectedGame?.description ?? ""
+                            color: "#aaa"
+                            font.pixelSize: 12
+                            wrapMode: Text.WordWrap
+                            maximumLineCount: 6
+                            elide: Text.ElideRight
+                            visible: text.length > 0
                         }
-                    }
-
-                    // Screenshot + Logo (when carousel shows covers)
-                    Image {
-                        id: screenshotImage
-                        anchors.fill: parent
-                        source: Rift.imageSource(selectedGame?.screenshot ?? "")
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        visible: root.showCover
-                        opacity: artworkContainer.shouldPlayVideo ? 0 : 1
-                        Behavior on opacity { NumberAnimation { duration: 300 } }
-
-                        // Logo overlay
-                        Image {
-                            anchors.centerIn: parent
-                            width: parent.width * 0.8
-                            height: parent.height * 0.4
-                            source: Rift.imageSource(selectedGame?.marquee ?? "")
-                            fillMode: Image.PreserveAspectFit
-                            asynchronous: true
-                            visible: source !== ""
-                            opacity: artworkContainer.shouldPlayVideo ? 0 : 1
-                            Behavior on opacity { NumberAnimation { duration: 300 } }
-                        }
-                    }
-
-                    // Boxart (when carousel shows screenshots)
-                    Image {
-                        anchors.fill: parent
-                        source: Rift.imageSource(selectedGame?.boxart ?? "")
-                        fillMode: Image.PreserveAspectFit
-                        asynchronous: true
-                        visible: !root.showCover
-                        opacity: artworkContainer.shouldPlayVideo ? 0 : 1
-                        Behavior on opacity { NumberAnimation { duration: 300 } }
-                    }
-
-                    // Video player
-                    Video {
-                        id: gameVideo
-                        anchors.fill: parent
-                        fillMode: VideoOutput.PreserveAspectCrop
-                        loops: MediaPlayer.Infinite
-                        volume: 0
-                        source: artworkContainer.shouldPlayVideo ? Rift.imageSource(selectedGame?.video ?? "") : ""
-                        opacity: artworkContainer.shouldPlayVideo ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 300 } }
-
-                        onSourceChanged: {
-                            if (source != "") {
-                                play()
-                            }
-                        }
-                    }
-                }
-
-                // Right: Game details
-                Column {
-                    width: parent.width - artworkContainer.width - 24
-                    height: parent.height
-                    spacing: 12
-
-                    // Game title
-                    Text {
-                        width: parent.width
-                        text: selectedGame?.name ?? ""
-                        color: "#fff"
-                        font.pixelSize: 24
-                        font.family: root.fontHeadline
-                        wrapMode: Text.WordWrap
-                        maximumLineCount: 2
-                        elide: Text.ElideRight
-                    }
-
-                    // Metadata row
-                    Row {
-                        spacing: 20
-
-                        MetadataTag {
-                            label: selectedGame?.genre ?? ""
-                            visible: label !== ""
-                        }
-
-                        MetadataTag {
-                            label: selectedGame?.releaseYear ?? ""
-                            visible: label !== ""
-                        }
-
-                        MetadataTag {
-                            label: selectedGame?.developer ?? ""
-                            visible: label !== ""
-                        }
-                    }
-
-                    // Separator
-                    Rectangle {
-                        width: parent.width
-                        height: 1
-                        color: "#333"
-                    }
-
-                    // Description
-                    Text {
-                        width: parent.width
-                        height: parent.height - 120
-                        text: selectedGame?.description ?? "No description available."
-                        color: "#aaa"
-                        font.pixelSize: 14
-                        wrapMode: Text.WordWrap
-                        elide: Text.ElideRight
-                        lineHeight: 1.4
                     }
                 }
             }
         }
     }
 
-    // Metadata tag component
-    component MetadataTag: Rectangle {
+    // Metadata row component
+    component MetadataRow: Row {
         property string label: ""
-        width: tagText.width + 16
-        height: 28
-        radius: 14
-        color: "#333"
-        visible: label !== ""
+        property string value: ""
+        width: parent.width
+        spacing: 8
 
         Text {
-            id: tagText
-            anchors.centerIn: parent
-            text: label
-            color: "#ccc"
+            text: label + ":"
+            color: "#888"
             font.pixelSize: 12
+            width: 80
+        }
+        Text {
+            text: value
+            color: "#fff"
+            font.pixelSize: 12
+            width: parent.width - 88
+            elide: Text.ElideRight
         }
     }
+
 }
