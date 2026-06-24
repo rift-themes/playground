@@ -14,11 +14,11 @@ FocusScope {
     FontLoader { id: headlineFont; source: "../fonts/Nulshock Bd.otf" }
     property string fontHeadline: headlineFont.status === FontLoader.Ready ? headlineFont.name : "sans-serif"
 
-    // Initial game index (restored from theme)
+    // Initial game index (restored from theme / back-navigation)
     property int initialGameIndex: 0
     onInitialGameIndexChanged: {
-        selectedIndex = initialGameIndex
-        gamesList.positionAtIndex(initialGameIndex)
+        console.log("[games] initialGameIndex ->", initialGameIndex)
+        Qt.callLater(restoreSelection)
     }
 
     // Platform passed from parent (or default to first)
@@ -28,9 +28,29 @@ FocusScope {
     // Games for this platform - using reactive model for live updates
     property var gamesModel: Rift.getGamesModelForPlatform(platformId)
 
-    // Currently selected game index
-    property int selectedIndex: initialGameIndex
+    // Currently selected game index (driven by the grid; selection flows up via onCurrentIndexChanged)
+    property int selectedIndex: 0
     property var selectedGame: gamesModel ? gamesModel.get(selectedIndex) : null
+
+    // Restore the selected game when returning from the detail page.
+    // Deferred + retried on model load so it wins the GridView's reset-to-0 during (re)loading.
+    function restoreSelection() {
+        if (!gamesModel || gamesModel.count <= 0) {
+            console.log("[games] restoreSelection: model not ready (count=" + (gamesModel ? gamesModel.count : "null") + ")")
+            return  // retried on countChanged
+        }
+        var idx = Math.max(0, Math.min(initialGameIndex, gamesModel.count - 1))
+        console.log("[games] restoreSelection -> idx=" + idx + " (count=" + gamesModel.count + ")")
+        gamesList.currentIndex = idx
+        gamesList.positionAtIndex(idx)
+    }
+
+    Connections {
+        target: gamesModel
+        function onCountChanged() { Qt.callLater(restoreSelection) }
+    }
+
+    Component.onCompleted: Qt.callLater(restoreSelection)
 
     // Auto-update secondary display when selected game changes
     onSelectedGameChanged: {
@@ -96,9 +116,9 @@ FocusScope {
 
                     model: gamesModel
                     platform: root.platform
-                    currentIndex: root.selectedIndex
                     showCover: root.showCover
 
+                    // Grid owns the index; mirror it up (no reverse binding to avoid clobbering on reload)
                     onCurrentIndexChanged: root.selectedIndex = currentIndex
                     onGameActivated: function(game, index) {
                         Rift.navigation.push("game", { game: game, gameIndex: index })
