@@ -57,8 +57,8 @@ FocusScope {
     property bool showCover: Rift.themeSetting("gameCardFormat") === "cover"
     // Hide game info panel if secondary display is active (metadata shown there instead)
     property bool showGameInfo: Rift.themeSetting("showGameInfo") !== false && !Rift.secondaryDisplayActive
-    // Show video in cards only when no secondary display (video plays there instead)
-    property bool showCardVideo: !Rift.secondaryDisplayActive
+    // Always show video in the list cards (even with a secondary display active)
+    property bool showCardVideo: true
 
     // Background - blurred screenshot of selected game
     Image {
