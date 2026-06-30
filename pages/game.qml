@@ -338,17 +338,18 @@ FocusScope {
 
                         // Play button
                         GameButton {
-                            width: 140
+                            glyph: "▶"
                             text: "PLAY"
                             primary: true
+                            accentColor: "#2ecc71"
                             focused: buttonsArea.focusedButton === 0 && buttonsArea.activeFocus
                             onClicked: if (game) Rift.launchGame(game.id)
                         }
 
                         // Favorite button
                         GameButton {
-                            width: 56
-                            iconSource: "../icons/heart.svg"
+                            glyph: "♥"
+                            text: "FAVORITE"
                             active: game?.favorite ?? false
                             focused: buttonsArea.focusedButton === 1 && buttonsArea.activeFocus
                             onClicked: {
@@ -361,8 +362,8 @@ FocusScope {
 
                         // Backlog button
                         GameButton {
-                            width: 56
-                            iconSource: "../icons/backlog.svg"
+                            glyph: "▤"
+                            text: "BACKLOG"
                             active: game?.backlog ?? false
                             focused: buttonsArea.focusedButton === 2 && buttonsArea.activeFocus
                             accentColor: "#3498db"
@@ -376,10 +377,10 @@ FocusScope {
 
                         // Achievements button
                         GameButton {
-                            width: 56
-                            iconSource: "../icons/trophy.svg"
+                            glyph: "★"
+                            text: achievements ? (achievements.numAchievements + "") : ""
+                            accentColor: "#FFD700"
                             focused: buttonsArea.focusedButton === 3 && buttonsArea.activeFocus
-                            activeAccentColor: "#FFD700"
                             visible: achievements && achievements.numAchievements > 0
                             onClicked: {
                                 if (achievements && achievements.id) {
@@ -450,72 +451,29 @@ FocusScope {
                         font.letterSpacing: 2
                     }
 
-                    // RiftCarousel for similar games
-                    RiftCarousel {
+
+                    // Horizontal list for similar games. A ListView packs each cover by its OWN
+                    // real width (box art aspects vary across systems), with a uniform gap and
+                    // bottom-aligned — unlike a fixed-slot carousel, which left inconsistent gaps.
+                    ListView {
                         id: similarGamesCarousel
                         width: parent.width
                         height: 180
                         clip: true
+                        orientation: ListView.Horizontal
+                        spacing: 14
+                        model: similarGames
+                        keyNavigationEnabled: false   // we drive currentIndex for boundary handling
+                        boundsBehavior: Flickable.StopAtBounds
 
-                        model: similarGamesModel
-                        carouselType: "horizontal"
-                        alignment: "start"
-                        startOffset: 0
-                        wrapAround: false
+                        // Smoothly scroll to keep the current cover in view when selection changes
+                        highlightRangeMode: ListView.ApplyRange
+                        preferredHighlightBegin: 0
+                        preferredHighlightEnd: width * 0.5
+                        highlightMoveDuration: 220
+                        highlightMoveVelocity: -1
 
-                        // Item sizing - larger items, only ~5 visible
-                        itemSizeX: 0.18
-                        itemSizeY: 0.85
-                        itemScale: 1.1
-                        maxItemCount: 5
-
-                        // Visual settings
-                        unfocusedItemOpacity: 0.6
-                        itemStacking: "centered"
-
-                        // Custom delegate using RiftGameCard
-                        delegate: Component {
-                            Item {
-                                property var modelData
-                                property int itemIndex
-                                property bool isSelected
-
-                                RiftGameCard {
-                                    anchors.fill: parent
-                                    game: modelData
-                                    isSelected: parent.isSelected
-                                    showCover: true
-                                    showVideo: false
-                                    showBorder: false
-                                    selectedScale: 1.0
-                                    cardRadius: 6
-                                }
-
-                                // Game name label below (visible when selected)
-                                Rectangle {
-                                    anchors.horizontalCenter: parent.horizontalCenter
-                                    anchors.top: parent.bottom
-                                    anchors.topMargin: 4
-                                    width: Math.min(gameNameLabel.implicitWidth + 12, parent.width * 1.4)
-                                    height: gameNameLabel.height + 6
-                                    radius: 3
-                                    color: "#CC000000"
-                                    visible: isSelected
-
-                                    Text {
-                                        id: gameNameLabel
-                                        anchors.centerIn: parent
-                                        text: modelData?.name ?? ""
-                                        color: "#fff"
-                                        font.pixelSize: 10
-                                        font.bold: true
-                                        elide: Text.ElideRight
-                                        width: parent.width - 6
-                                        horizontalAlignment: Text.AlignHCenter
-                                    }
-                                }
-                            }
-                        }
+                        signal itemActivated(int index)
 
                         // Navigate to selected game on activation
                         onItemActivated: function(index) {
@@ -525,19 +483,78 @@ FocusScope {
                             }
                         }
 
-                        // Handle boundary (when can't navigate further)
-                        onBoundaryReached: function(direction) {
-                            if (direction === "left" || direction === "up") {
-                                buttonsArea.forceActiveFocus()
+                        // Navigation (boundary -> back to the action buttons)
+                        Keys.onLeftPressed: {
+                            if (currentIndex > 0) currentIndex--
+                            else buttonsArea.forceActiveFocus()
+                        }
+                        Keys.onRightPressed: {
+                            if (currentIndex < count - 1) currentIndex++
+                        }
+                        Keys.onUpPressed: buttonsArea.forceActiveFocus()
+
+                        // Auto-scroll the outer flickable to reveal the section on focus
+                        onActiveFocusChanged: {
+                            if (activeFocus) {
+                                var targetY = similarGamesSection.y - 20
+                                metadataFlickable.contentY = Math.min(targetY, metadataFlickable.contentHeight - metadataFlickable.height)
                             }
                         }
 
-                        // Auto-scroll to show carousel when it gets focus
-                        onActiveFocusChanged: {
-                            if (activeFocus) {
-                                // Scroll flickable to show similar games section
-                                var targetY = similarGamesSection.y - 20
-                                metadataFlickable.contentY = Math.min(targetY, metadataFlickable.contentHeight - metadataFlickable.height)
+                        delegate: Item {
+                            id: del
+                            required property var modelData
+                            required property int index
+
+                            height: ListView.view.height
+                            width: cover.width   // real cover width drives the packing
+
+                            Image {
+                                id: cover
+                                anchors.bottom: parent.bottom
+                                height: parent.height
+                                // Real width from the image's natural dimensions (no square veil)
+                                width: implicitHeight > 0
+                                       ? Math.round(height * implicitWidth / implicitHeight)
+                                       : height
+                                source: Rift.imageSource(del.modelData?.boxart ?? "")
+                                fillMode: Image.PreserveAspectFit
+                                sourceSize.height: Math.round(parent.height * 2)
+                                asynchronous: true
+                                smooth: true
+                                opacity: del.ListView.isCurrentItem ? 1.0 : 0.6
+                                Behavior on opacity { NumberAnimation { duration: 150 } }
+                            }
+
+                            // Name caption over the bottom of the current cover
+                            Rectangle {
+                                anchors.bottom: cover.bottom
+                                anchors.horizontalCenter: cover.horizontalCenter
+                                width: cover.width
+                                height: gameNameLabel.height + 8
+                                color: "#CC000000"
+                                visible: del.ListView.isCurrentItem
+
+                                Text {
+                                    id: gameNameLabel
+                                    anchors.centerIn: parent
+                                    text: del.modelData?.name ?? ""
+                                    color: "#fff"
+                                    font.pixelSize: 10
+                                    font.bold: true
+                                    elide: Text.ElideRight
+                                    width: parent.width - 8
+                                    horizontalAlignment: Text.AlignHCenter
+                                }
+                            }
+
+                            MouseArea {
+                                anchors.fill: parent
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    del.ListView.view.currentIndex = del.index
+                                    del.ListView.view.itemActivated(del.index)
+                                }
                             }
                         }
                     }
@@ -634,12 +651,12 @@ FocusScope {
         }
     }
 
-    // Button component for game actions
+    // Button component for game actions — labeled pill (glyph + text)
     component GameButton: Rectangle {
         id: btn
 
         property string text: ""
-        property string iconSource: ""
+        property string glyph: ""        // unicode icon (tints via Text color)
         property bool primary: false
         property bool active: false
         property bool focused: false
@@ -648,137 +665,47 @@ FocusScope {
 
         signal clicked()
 
-        height: primary ? 56 : 48
+        // Pill auto-sizes to its content
+        height: 52
         radius: height / 2
+        implicitWidth: contentRow.implicitWidth + (btn.text !== "" ? 40 : 30)
+        width: implicitWidth
 
-        color: {
-            if (primary || active) {
-                return focused || mouseArea.containsMouse ? Qt.lighter(accentColor, 1.15) : accentColor
-            }
-            return focused || mouseArea.containsMouse ? "#444" : "#333"
-        }
+        // Per-button accent shown on the BACKGROUND when focused/hovered/active; black otherwise.
+        readonly property color tone: active ? activeAccentColor : accentColor
+        readonly property bool highlighted: focused || active || mouseArea.containsMouse
 
-        border.color: {
-            if (focused) return "#fff"
-            if (active) return accentColor
-            if (mouseArea.containsMouse) return activeAccentColor
-            return "#555"
-        }
-        border.width: focused ? 3 : (primary ? 0 : 1)
+        // Black by default, accent fill on focus/hover/active (no border).
+        color: highlighted ? (mouseArea.containsMouse ? Qt.lighter(tone, 1.12) : tone) : "#000000"
 
         scale: mouseArea.pressed ? 0.95 : 1.0
 
         Behavior on color { ColorAnimation { duration: 150 } }
         Behavior on scale { NumberAnimation { duration: 100 } }
 
-        // Text label (for PLAY button)
-        Text {
+        // Text/glyph always white
+        readonly property color contentColor: "#ffffff"
+
+        Row {
+            id: contentRow
             anchors.centerIn: parent
-            text: btn.text
-            visible: btn.text !== "" && btn.iconSource === ""
-            color: {
-                if (primary || active) return "#fff"
-                if (focused || mouseArea.containsMouse) return btn.activeAccentColor
-                return "#888"
+            spacing: 8
+
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: btn.glyph !== ""
+                text: btn.glyph
+                color: btn.contentColor
+                font.pixelSize: 18
             }
-            font.pixelSize: primary ? 20 : 20
-            font.bold: true
-        }
-
-        // SVG icon (for icon buttons)
-        Image {
-            anchors.centerIn: parent
-            width: 24
-            height: 24
-            source: btn.iconSource
-            visible: btn.iconSource !== ""
-            sourceSize: Qt.size(24, 24)
-
-            // Tint the SVG using ColorOverlay effect
-            layer.enabled: true
-            layer.effect: Item {
-                property color overlayColor: {
-                    if (btn.primary || btn.active) return "#fff"
-                    if (btn.focused || mouseArea.containsMouse) return btn.activeAccentColor
-                    return "#888"
-                }
-            }
-        }
-
-        // Color overlay for SVG tinting
-        Rectangle {
-            id: iconOverlay
-            anchors.centerIn: parent
-            width: 24
-            height: 24
-            color: "transparent"
-            visible: btn.iconSource !== ""
-
-            Image {
-                id: iconImage
-                anchors.fill: parent
-                source: btn.iconSource
-                sourceSize: Qt.size(24, 24)
-                visible: false
-            }
-
-            // Simple color tint using ShaderEffectSource would be ideal,
-            // but for compatibility, we'll use a colored rectangle with mask
-            Canvas {
-                id: tintedIcon
-                anchors.fill: parent
-                visible: btn.iconSource !== ""
-
-                property color tintColor: {
-                    if (btn.primary || btn.active) return "#fff"
-                    if (btn.focused || mouseArea.containsMouse) return btn.activeAccentColor
-                    return "#888"
-                }
-
-                onTintColorChanged: requestPaint()
-                onPaint: {
-                    var ctx = getContext("2d")
-                    ctx.clearRect(0, 0, width, height)
-                    ctx.fillStyle = tintColor
-                    ctx.globalCompositeOperation = "source-over"
-
-                    // Draw a simple shape based on icon type
-                    if (btn.iconSource.indexOf("heart") >= 0) {
-                        // Heart shape
-                        ctx.beginPath()
-                        ctx.moveTo(12, 20)
-                        ctx.bezierCurveTo(12, 20, 4, 14, 4, 9)
-                        ctx.bezierCurveTo(4, 6, 6.5, 4, 9, 4)
-                        ctx.bezierCurveTo(10.5, 4, 11.5, 5, 12, 6)
-                        ctx.bezierCurveTo(12.5, 5, 13.5, 4, 15, 4)
-                        ctx.bezierCurveTo(17.5, 4, 20, 6, 20, 9)
-                        ctx.bezierCurveTo(20, 14, 12, 20, 12, 20)
-                        ctx.fill()
-                    } else if (btn.iconSource.indexOf("backlog") >= 0) {
-                        // Play triangle
-                        ctx.beginPath()
-                        ctx.moveTo(7, 4)
-                        ctx.lineTo(7, 20)
-                        ctx.lineTo(19, 12)
-                        ctx.closePath()
-                        ctx.fill()
-                    } else if (btn.iconSource.indexOf("trophy") >= 0) {
-                        // Trophy shape (simplified)
-                        ctx.beginPath()
-                        // Cup
-                        ctx.moveTo(6, 4)
-                        ctx.lineTo(18, 4)
-                        ctx.lineTo(17, 10)
-                        ctx.bezierCurveTo(17, 13, 14, 14, 12, 14)
-                        ctx.bezierCurveTo(10, 14, 7, 13, 7, 10)
-                        ctx.lineTo(6, 4)
-                        ctx.fill()
-                        // Stem
-                        ctx.fillRect(10, 14, 4, 3)
-                        // Base
-                        ctx.fillRect(8, 17, 8, 3)
-                    }
-                }
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: btn.text !== ""
+                text: btn.text
+                color: btn.contentColor
+                font.pixelSize: 15
+                font.bold: true
+                font.letterSpacing: 0.5
             }
         }
 
