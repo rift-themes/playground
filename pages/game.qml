@@ -493,11 +493,15 @@ FocusScope {
                         }
                         Keys.onUpPressed: buttonsArea.forceActiveFocus()
 
-                        // Auto-scroll the outer flickable to reveal the section on focus
+                        // Auto-scroll the outer flickable to reveal the section on focus.
+                        // Clamp to [0, maxScroll]: when the content fits the viewport, maxScroll is
+                        // negative and an unclamped value would push contentY < 0, dropping the whole
+                        // column down with a big empty top margin.
                         onActiveFocusChanged: {
                             if (activeFocus) {
+                                var maxY = Math.max(0, metadataFlickable.contentHeight - metadataFlickable.height)
                                 var targetY = similarGamesSection.y - 20
-                                metadataFlickable.contentY = Math.min(targetY, metadataFlickable.contentHeight - metadataFlickable.height)
+                                metadataFlickable.contentY = Math.max(0, Math.min(targetY, maxY))
                             }
                         }
 
@@ -522,7 +526,9 @@ FocusScope {
                                 sourceSize.height: Math.round(parent.height * 2)
                                 asynchronous: true
                                 smooth: true
-                                opacity: del.ListView.isCurrentItem ? 1.0 : 0.6
+                                // Only show the highlight when the carousel actually has focus, so
+                                // moving focus from the buttons into the carousel is visible.
+                                opacity: (del.ListView.isCurrentItem && similarGamesCarousel.activeFocus) ? 1.0 : 0.6
                                 Behavior on opacity { NumberAnimation { duration: 150 } }
                             }
 
@@ -533,7 +539,7 @@ FocusScope {
                                 width: cover.width
                                 height: gameNameLabel.height + 8
                                 color: "#CC000000"
-                                visible: del.ListView.isCurrentItem
+                                visible: del.ListView.isCurrentItem && similarGamesCarousel.activeFocus
 
                                 Text {
                                     id: gameNameLabel
