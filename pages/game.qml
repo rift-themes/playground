@@ -190,6 +190,9 @@ FocusScope {
                         id: metadataColumn
                         width: parent.width
                         spacing: 20
+                        // Leave room at the bottom (~footer height) so the last section can scroll
+                        // clear of the global RiftFooter instead of ending up hidden behind it.
+                        bottomPadding: Math.round(root.height * 0.12) + 24
 
                         // Game title (hidden if boxart is available)
                         Text {
@@ -326,10 +329,11 @@ FocusScope {
                     property int focusedButton: 0
                     property int buttonCount: achievements && achievements.numAchievements > 0 ? 4 : 3
 
-                    // Auto-scroll to top when buttons get focus (to show title)
+                    // Animated auto-scroll back to the top when buttons regain focus (show title)
                     onActiveFocusChanged: {
                         if (activeFocus) {
-                            metadataFlickable.contentY = 0
+                            revealScrollAnim.to = 0
+                            revealScrollAnim.restart()
                         }
                     }
 
@@ -477,11 +481,15 @@ FocusScope {
 
                         signal itemActivated(int index)
 
-                        // Navigate to selected game on activation
+                        // Open the selected similar game (updates in place). Return focus to the
+                        // action buttons so the view scrolls back to the top and shows the new
+                        // game's title/boxart instead of staying down on the similar-games list.
                         onItemActivated: function(index) {
                             var selectedGame = similarGamesModel.get(index)
                             if (selectedGame) {
                                 root.game = Rift.getGame(selectedGame.id)
+                                currentIndex = 0
+                                buttonsArea.forceActiveFocus()
                             }
                         }
 
@@ -495,7 +503,15 @@ FocusScope {
                         }
                         Keys.onUpPressed: buttonsArea.forceActiveFocus()
 
-                        // Auto-scroll the outer flickable to reveal the section on focus.
+                        // Animated auto-scroll to reveal the section when it gains focus.
+                        NumberAnimation {
+                            id: revealScrollAnim
+                            target: metadataFlickable
+                            property: "contentY"
+                            duration: 250
+                            easing.type: Easing.OutCubic
+                        }
+
                         // Clamp to [0, maxScroll]: when the content fits the viewport, maxScroll is
                         // negative and an unclamped value would push contentY < 0, dropping the whole
                         // column down with a big empty top margin.
@@ -503,7 +519,8 @@ FocusScope {
                             if (activeFocus) {
                                 var maxY = Math.max(0, metadataFlickable.contentHeight - metadataFlickable.height)
                                 var targetY = similarGamesSection.y - 20
-                                metadataFlickable.contentY = Math.max(0, Math.min(targetY, maxY))
+                                revealScrollAnim.to = Math.max(0, Math.min(targetY, maxY))
+                                revealScrollAnim.restart()
                             }
                         }
 
