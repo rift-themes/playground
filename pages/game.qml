@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import Qt5Compat.GraphicalEffects
 import Rift 1.0
 
 /**
@@ -24,8 +25,9 @@ FocusScope {
     // Similar games
     property var similarGames: []
 
-    // Compact layout for standard (4:3) or square (1:1) screens (hide left column)
-    property bool isCompactScreen: Rift.isStandard || Rift.isSquare
+    // Compact layout on short screens: the left column (boxart + quick info) only shows when
+    // the screen is at least 500px tall; below that it's hidden and the right column goes full width.
+    property bool isCompactScreen: height < 500
 
     // Load achievements and similar games when game changes
     onGameChanged: {
@@ -338,7 +340,7 @@ FocusScope {
 
                         // Play button
                         GameButton {
-                            glyph: "▶"
+                            iconSource: "../icons/play.svg"
                             text: "PLAY"
                             primary: true
                             accentColor: "#2ecc71"
@@ -348,7 +350,7 @@ FocusScope {
 
                         // Favorite button
                         GameButton {
-                            glyph: "♥"
+                            iconSource: "../icons/heart.svg"
                             text: "FAVORITE"
                             active: game?.favorite ?? false
                             focused: buttonsArea.focusedButton === 1 && buttonsArea.activeFocus
@@ -362,7 +364,7 @@ FocusScope {
 
                         // Backlog button
                         GameButton {
-                            glyph: "▤"
+                            iconSource: "../icons/backlog.svg"
                             text: "BACKLOG"
                             active: game?.backlog ?? false
                             focused: buttonsArea.focusedButton === 2 && buttonsArea.activeFocus
@@ -377,7 +379,7 @@ FocusScope {
 
                         // Achievements button
                         GameButton {
-                            glyph: "★"
+                            iconSource: "../icons/trophy.svg"
                             text: achievements ? (achievements.numAchievements + "") : ""
                             accentColor: "#FFD700"
                             focused: buttonsArea.focusedButton === 3 && buttonsArea.activeFocus
@@ -662,7 +664,7 @@ FocusScope {
         id: btn
 
         property string text: ""
-        property string glyph: ""        // unicode icon (tints via Text color)
+        property string iconSource: ""   // SVG icon (tinted to contentColor)
         property bool primary: false
         property bool active: false
         property bool focused: false
@@ -697,12 +699,19 @@ FocusScope {
             anchors.centerIn: parent
             spacing: 8
 
-            Text {
+            Image {
                 anchors.verticalCenter: parent.verticalCenter
-                visible: btn.glyph !== ""
-                text: btn.glyph
-                color: btn.contentColor
-                font.pixelSize: 18
+                visible: btn.iconSource !== ""
+                source: btn.iconSource
+                sourceSize: Qt.size(20, 20)
+                width: 18
+                height: 18
+                fillMode: Image.PreserveAspectFit
+                smooth: true
+                // Tint to the button's content color (white) — cross-platform, so the icon
+                // looks identical on PC and Android (no font-glyph fallback differences).
+                layer.enabled: true
+                layer.effect: ColorOverlay { color: btn.contentColor }
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
