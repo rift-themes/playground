@@ -145,7 +145,7 @@ FocusScope {
                 Rectangle {
                     width: parent.width
                     height: root.height - 80
-                    color: "#1a1a2e"
+                    color: "#000000"
                     radius: 12
                     opacity: 0.9
 
