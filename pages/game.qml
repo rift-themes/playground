@@ -32,6 +32,7 @@ FocusScope {
     // Load achievements and similar games when game changes
     onGameChanged: {
         if (game && game.platformId) {
+            Rift.selectedGameId = game.id
             achievements = Rift.getGameAchievementsByName(game.platformId, game.name ?? "", game.md5 ?? "")
             similarGames = Rift.getSimilarGames(game.id, 8)
         } else {
@@ -606,7 +607,7 @@ FocusScope {
             if (achievementsModalVisible) {
                 achievementsModalVisible = false
             } else {
-                Rift.navigation.pop()
+                Rift.navigateBack()
             }
         }
         function onInputAccept() {
@@ -631,14 +632,14 @@ FocusScope {
         if (achievementsModalVisible) {
             achievementsModalVisible = false
         } else {
-            Rift.navigation.pop()
+            Rift.navigateBack()
         }
     }
     Keys.onBackPressed: {
         if (achievementsModalVisible) {
             achievementsModalVisible = false
         } else {
-            Rift.navigation.pop()
+            Rift.navigateBack()
         }
     }
     Keys.onReturnPressed: {
