@@ -67,11 +67,15 @@ FocusScope {
                         id: listTitle
                         anchors.top: parent.top
                         anchors.left: parent.left
+                        anchors.right: parent.right
                         anchors.margins: 24
                         text: (platform?.displayName ?? "Games").replace(/\b(Nintendo|Sega|Sony)\b\s*/gi, "").trim()
                         color: "#fff"
                         font.pixelSize: 24
                         font.family: root.fontHeadline
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
                     }
 
                     ListView {

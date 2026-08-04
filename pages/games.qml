@@ -94,11 +94,15 @@ FocusScope {
 
                 // Section title
                 Text {
+                    width: parent.width
                     text: (platform?.displayName ?? "Games").replace(/\b(Nintendo|Sega|Sony)\b\s*/gi, "").trim()
                     color: "#fff"
                     font.pixelSize: 28
                     font.family: root.fontHeadline
                     bottomPadding: 16
+                    wrapMode: Text.WordWrap
+                    maximumLineCount: 2
+                    elide: Text.ElideRight
                 }
 
                 // Games grid
