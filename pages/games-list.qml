@@ -85,7 +85,7 @@ FocusScope {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         anchors.bottom: parent.bottom
-                        anchors.bottomMargin: 16
+                        anchors.bottomMargin: root.height * 0.11 + 16
                         clip: true
                         focus: true
                         model: gamesModel                       
@@ -99,7 +99,7 @@ FocusScope {
                             required property int index
 
                             width: gamesListView.width
-                            height: 46
+                            height: 64
 
                             Rectangle {
                                 anchors.fill: parent
