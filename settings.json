@@ -6,11 +6,26 @@
       "description": "Animation style when navigating between pages",
       "type": "select",
       "options": [
-        { "value": "none", "label": "None" },
-        { "value": "fade", "label": "Fade" },
-        { "value": "slide", "label": "Slide" },
-        { "value": "scale", "label": "Scale + Fade" },
-        { "value": "slideFade", "label": "Slide + Fade" }
+        {
+          "value": "none",
+          "label": "None"
+        },
+        {
+          "value": "fade",
+          "label": "Fade"
+        },
+        {
+          "value": "slide",
+          "label": "Slide"
+        },
+        {
+          "value": "scale",
+          "label": "Scale + Fade"
+        },
+        {
+          "value": "slideFade",
+          "label": "Slide + Fade"
+        }
       ],
       "default": "slideFade"
     },
@@ -20,8 +35,14 @@
       "description": "How platforms are displayed on the home screen",
       "type": "select",
       "options": [
-        { "value": "default", "label": "Carousel" },
-        { "value": "grid", "label": "Grid" }
+        {
+          "value": "default",
+          "label": "Carousel"
+        },
+        {
+          "value": "grid",
+          "label": "Grid"
+        }
       ],
       "default": "default"
     },
@@ -31,8 +52,14 @@
       "description": "How games list is displayed",
       "type": "select",
       "options": [
-        { "value": "default", "label": "Grid" },
-        { "value": "carousel", "label": "Carousel" }
+        {
+          "value": "default",
+          "label": "Grid"
+        },
+        {
+          "value": "list",
+          "label": "List"
+        }
       ],
       "default": "default"
     },
@@ -42,8 +69,14 @@
       "description": "How game cards are displayed in the games list",
       "type": "select",
       "options": [
-        { "value": "cover", "label": "Cover" },
-        { "value": "screenshot", "label": "Screenshot + Logo" }
+        {
+          "value": "cover",
+          "label": "Cover"
+        },
+        {
+          "value": "screenshot",
+          "label": "Screenshot + Logo"
+        }
       ],
       "default": "cover"
     },
