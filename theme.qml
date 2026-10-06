@@ -63,6 +63,18 @@ FocusScope {
         function onPageDown() { root.switchPlatform(1) }
     }
 
+    Keys.onPressed: function(event) {
+        if (Rift.navigation.currentPage !== "games" || event.isAutoRepeat)
+            return
+        if (event.key === Qt.Key_Q || event.key === Qt.Key_PageUp) {
+            root.switchPlatform(-1)
+            event.accepted = true
+        } else if (event.key === Qt.Key_E || event.key === Qt.Key_PageDown) {
+            root.switchPlatform(1)
+            event.accepted = true
+        }
+    }
+
     function switchPlatform(step) {
         var count = Rift.platforms.count
         if (count < 2)
