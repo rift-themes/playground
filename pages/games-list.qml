@@ -1,8 +1,11 @@
 import QtQuick
 import Rift 1.0
+import ".."
 
 FocusScope {
     id: root
+
+    Colors { id: colors }
     focus: true
 
     FontLoader { id: headlineFont; source: "../fonts/Nulshock Bd.otf" }
@@ -37,12 +40,15 @@ FocusScope {
     onSelectedGameChanged: {
         if (selectedGame?.id) {
             Rift.selectedGameId = selectedGame.id
+            Rift.setContextGameById(selectedGame.id)
         }
     }
 
+    Component.onDestruction: Rift.contextGame = {}
+
     Rectangle {
         anchors.fill: parent
-        color: "#000"
+        color: colors.background
     }
 
     RiftContainer {
@@ -61,7 +67,7 @@ FocusScope {
                 Rectangle {
                     width: parent.width
                     height: root.height
-                    color: "#0c0c0e"
+                    color: colors.surface
 
                     Text {
                         id: listTitle
@@ -70,7 +76,7 @@ FocusScope {
                         anchors.right: parent.right
                         anchors.margins: 24
                         text: (platform?.displayName ?? "Games").replace(/\b(Nintendo|Sega|Sony)\b\s*/gi, "").trim()
-                        color: "#fff"
+                        color: colors.textPrimary
                         font.pixelSize: 24
                         font.family: root.fontHeadline
                         wrapMode: Text.WordWrap
@@ -103,8 +109,8 @@ FocusScope {
 
                             Rectangle {
                                 anchors.fill: parent
-                                color: index === gamesListView.currentIndex ? "#1758c0"
-                                     : (hover.hovered ? "#17171b" : "transparent")
+                                color: index === gamesListView.currentIndex ? colors.accent
+                                     : (hover.hovered ? colors.hover : "transparent")
                             }
 
                             Text {
@@ -114,7 +120,7 @@ FocusScope {
                                 anchors.leftMargin: 24
                                 anchors.rightMargin: 16
                                 text: modelData?.name ?? ""
-                                color: index === gamesListView.currentIndex ? "#fff" : "#b5b5bb"
+                                color: index === gamesListView.currentIndex ? colors.textPrimary : colors.textList
                                 font.pixelSize: 15
                                 elide: Text.ElideRight
                             }
@@ -169,8 +175,8 @@ FocusScope {
                     Rectangle {
                         anchors.fill: parent
                         gradient: Gradient {
-                            GradientStop { position: 0.0; color: "#00000000" }
-                            GradientStop { position: 1.0; color: "#cc000000" }
+                            GradientStop { position: 0.0; color: colors.scrim0 }
+                            GradientStop { position: 1.0; color: colors.scrim80 }
                         }
                     }
 
@@ -190,7 +196,7 @@ FocusScope {
                         anchors.centerIn: parent
                         width: parent.width * 0.7
                         text: root.selectedGame?.name ?? ""
-                        color: "#fff"
+                        color: colors.textPrimary
                         font.pixelSize: 40
                         font.family: root.fontHeadline
                         horizontalAlignment: Text.AlignHCenter

@@ -1,5 +1,6 @@
 import QtQuick
 import Rift 1.0
+import ".."
 
 /**
  * Games - Grid view of games for a platform
@@ -8,6 +9,8 @@ import Rift 1.0
  */
 FocusScope {
     id: root
+
+    Colors { id: colors }
     focus: true
 
     // Fonts
@@ -73,7 +76,7 @@ FocusScope {
     // Dark overlay
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: colors.background
         opacity: 0.6
     }
 
@@ -96,7 +99,7 @@ FocusScope {
                 Text {
                     width: parent.width
                     text: (platform?.displayName ?? "Games").replace(/\b(Nintendo|Sega|Sony)\b\s*/gi, "").trim()
-                    color: "#fff"
+                    color: colors.textPrimary
                     font.pixelSize: 28
                     font.family: root.fontHeadline
                     bottomPadding: 16
@@ -149,7 +152,7 @@ FocusScope {
                 Rectangle {
                     width: parent.width
                     height: root.height - 80
-                    color: "#000000"
+                    color: colors.background
                     radius: 12
                     opacity: 0.9
 
@@ -162,7 +165,7 @@ FocusScope {
                         Text {
                             width: parent.width
                             text: selectedGame?.name ?? ""
-                            color: "#fff"
+                            color: colors.textPrimary
                             font.pixelSize: 20
                             font.family: root.fontHeadline
                             wrapMode: Text.WordWrap
@@ -173,7 +176,7 @@ FocusScope {
                         Rectangle {
                             width: parent.width
                             height: 1
-                            color: "#444"
+                            color: colors.border
                         }
 
                         // Metadata grid
@@ -222,7 +225,7 @@ FocusScope {
                         Text {
                             width: parent.width
                             text: selectedGame?.description ?? ""
-                            color: "#aaa"
+                            color: colors.textSecondary
                             font.pixelSize: 12
                             wrapMode: Text.WordWrap
                             maximumLineCount: 6
@@ -244,13 +247,13 @@ FocusScope {
 
         Text {
             text: label + ":"
-            color: "#888"
+            color: colors.textMuted
             font.pixelSize: 12
             width: 80
         }
         Text {
             text: value
-            color: "#fff"
+            color: colors.textPrimary
             font.pixelSize: 12
             width: parent.width - 88
             elide: Text.ElideRight

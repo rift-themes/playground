@@ -1,5 +1,6 @@
 import QtQuick
 import Rift 1.0
+import ".."
 
 /**
  * HomeGrid - Grid system demo home page
@@ -7,6 +8,8 @@ import Rift 1.0
  */
 FocusScope {
     id: root
+
+    Colors { id: colors }
     focus: true
 
     // Initial platform index (restored from theme)
@@ -42,7 +45,7 @@ FocusScope {
     // Dark overlay for better logo visibility
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: colors.background
         opacity: 0.5
     }
 
@@ -98,7 +101,7 @@ FocusScope {
                     // Display elements - white logos + game count
                     displayElements: [
                         { type: "logoWhite", height: 0.6 },
-                        { type: "gameCount", fontSize: 14, color: "#fff", template: "{count} games" }
+                        { type: "gameCount", fontSize: 14, color: colors.textPrimary, template: "{count} games" }
                     ]
 
                     // Delegate styling

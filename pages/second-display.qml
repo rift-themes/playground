@@ -7,7 +7,9 @@ import QtMultimedia
  */
 Rectangle {
     id: root
-    color: "#031921"
+
+    Colors { id: colors }
+    color: colors.secondaryBackground
 
     // Current page/mode: "home", "games", "game"
     property string currentPage: "home"
@@ -85,7 +87,7 @@ Rectangle {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.platformReleaseYear
-                color: "#e94560"
+                color: colors.accentAlt
                 font.pixelSize: 32
                 font.family: root.fontHeadline
                 visible: text !== ""
@@ -94,7 +96,7 @@ Rectangle {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: root.platformDescription
-                color: "#AAAAAA"
+                color: colors.secondaryTextSecondary
                 font.pixelSize: 24
                 width: root.width - 40
                 horizontalAlignment: Text.AlignHCenter
@@ -154,7 +156,7 @@ Rectangle {
             anchors.right: parent.right
             anchors.bottom: parent.bottom
             height: gamesTitleText.height + 24
-            color: "#CC031921"
+            color: colors.secondaryPanel
             visible: root.gameTitle !== ""
 
             Text {
@@ -162,7 +164,7 @@ Rectangle {
                 anchors.centerIn: parent
                 width: parent.width - 32
                 text: root.gameTitle
-                color: "#FFFFFF"
+                color: colors.secondaryTextPrimary
                 font.pixelSize: 20
                 font.family: root.fontHeadline
                 horizontalAlignment: Text.AlignHCenter
@@ -184,7 +186,7 @@ Rectangle {
             anchors.fill: parent
             anchors.margins: 24
             text: root.gameDescription
-            color: "#CCCCCC"
+            color: colors.secondaryTextMuted
             font.pixelSize: 28
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
@@ -197,7 +199,7 @@ Rectangle {
         Text {
             anchors.centerIn: parent
             text: root.gameTitle
-            color: "#666666"
+            color: colors.secondaryTextDim
             font.pixelSize: 24
             font.family: root.fontHeadline
             visible: root.gameDescription === ""

@@ -1,5 +1,6 @@
 import QtQuick
 import Rift 1.0
+import ".."
 
 /**
  * HomeGrid - Grid layout for platforms
@@ -7,6 +8,8 @@ import Rift 1.0
  */
 FocusScope {
     id: root
+
+    Colors { id: colors }
     focus: true
 
     // Fonts
@@ -48,7 +51,7 @@ FocusScope {
     // Dark overlay for better visibility
     Rectangle {
         anchors.fill: parent
-        color: "#000000"
+        color: colors.background
         opacity: 0.6
     }
 
@@ -68,7 +71,7 @@ FocusScope {
                 // Title
                 Text {
                     text: "Platforms"
-                    color: "#fff"
+                    color: colors.textPrimary
                     font.pixelSize: 32
                     font.family: root.fontHeadline
                     bottomPadding: 24
@@ -117,7 +120,7 @@ FocusScope {
                             anchors.margins: 8
                             radius: 12
                             color: "transparent"
-                            border.color: delegateRoot.isSelected ? "#fff" : "transparent"
+                            border.color: delegateRoot.isSelected ? colors.textPrimary : "transparent"
                             border.width: delegateRoot.isSelected ? 3 : 0
 
                             scale: delegateRoot.isSelected ? 1.02 : 1.0
@@ -149,7 +152,7 @@ FocusScope {
                                 anchors.bottom: parent.bottom
                                 anchors.bottomMargin: 16
                                 text: (delegateRoot.modelData?.gameCount ?? 0) + " games"
-                                color: delegateRoot.isSelected ? "#fff" : "#888"
+                                color: delegateRoot.isSelected ? colors.textPrimary : colors.textMuted
                                 font.pixelSize: 14
                                 font.bold: delegateRoot.isSelected
 

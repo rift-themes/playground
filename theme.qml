@@ -9,9 +9,11 @@ FocusScope {
     id: root
     focus: true
 
+    Colors { id: colors }
+
     // Footer customization (read by global RiftFooter in main.qml)
-    property color footerBackgroundColor: "#000"
-    property color footerTextColor: "#AAAAAA"
+    property color footerBackgroundColor: colors.footerBackground
+    property color footerTextColor: colors.footerText
     property real footerBackgroundOpacity: 0.85
     property bool footerVisible: true
 
@@ -57,7 +59,7 @@ FocusScope {
     // Background
     Rectangle {
         anchors.fill: parent
-        color: "#000"
+        color: colors.background
     }
 
     // Router handles navigation, page loading, and hot reload

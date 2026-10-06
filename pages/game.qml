@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls
 import Qt5Compat.GraphicalEffects
 import Rift 1.0
+import ".."
 
 /**
  * Game - Detailed view of a single game
@@ -9,6 +10,8 @@ import Rift 1.0
  */
 FocusScope {
     id: root
+
+    Colors { id: colors }
     focus: true
 
     // Fonts
@@ -58,10 +61,10 @@ FocusScope {
     Rectangle {
         anchors.fill: parent
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#00000000" }
-            GradientStop { position: 0.3; color: "#80000000" }
-            GradientStop { position: 0.6; color: "#CC000000" }
-            GradientStop { position: 1.0; color: "#FF000000" }
+            GradientStop { position: 0.0; color: colors.scrim0 }
+            GradientStop { position: 0.3; color: colors.scrim50 }
+            GradientStop { position: 0.6; color: colors.scrim80 }
+            GradientStop { position: 1.0; color: colors.scrimFull }
         }
     }
 
@@ -71,8 +74,8 @@ FocusScope {
         height: parent.height * 0.25
         anchors.top: parent.top
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#CC000000" }
-            GradientStop { position: 1.0; color: "#00000000" }
+            GradientStop { position: 0.0; color: colors.scrim80 }
+            GradientStop { position: 1.0; color: colors.scrim0 }
         }
     }
 
@@ -82,9 +85,9 @@ FocusScope {
         height: parent.height
         gradient: Gradient {
             orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: "#EE000000" }
-            GradientStop { position: 0.7; color: "#AA000000" }
-            GradientStop { position: 1.0; color: "#00000000" }
+            GradientStop { position: 0.0; color: colors.scrim93 }
+            GradientStop { position: 0.7; color: colors.scrim67 }
+            GradientStop { position: 1.0; color: colors.scrim0 }
         }
     }
 
@@ -137,8 +140,8 @@ FocusScope {
                         width: 32
                         height: 32
                         radius: 6
-                        color: "#2a2a3a"
-                        border.color: "#9b59b6"
+                        color: colors.surfaceAlt
+                        border.color: colors.accentPurple
                         border.width: 1
 
                         Image {
@@ -154,7 +157,7 @@ FocusScope {
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
                         text: game?.emulatorId ?? ""
-                        color: "#9b59b6"
+                        color: colors.accentPurple
                         font.pixelSize: 12
                         font.bold: true
                     }
@@ -168,7 +171,7 @@ FocusScope {
                         && !isNaN(new Date(lastPlayedDate).getTime())
                         && new Date(lastPlayedDate).getFullYear() > 1970
                     text: hasValidDate ? "Last played: " + Qt.formatDateTime(lastPlayedDate, "MMM d, yyyy") : ""
-                    color: "#666"
+                    color: colors.textDim
                     font.pixelSize: 13
                     visible: hasValidDate
                 }
@@ -199,7 +202,7 @@ FocusScope {
                         Text {
                             width: parent.width
                             text: game?.name ?? ""
-                            color: "#fff"
+                            color: colors.textPrimary
                             font.pixelSize: 36
                             font.family: root.fontHeadline
                             wrapMode: Text.WordWrap
@@ -208,7 +211,7 @@ FocusScope {
                 // Subtitle with platform (hidden if boxart is available)
                 Text {
                     text: game?.platformName ?? ""
-                    color: "#888"
+                    color: colors.textMuted
                     font.pixelSize: 18
                     font.italic: true
                 }
@@ -218,7 +221,7 @@ FocusScope {
                     width: parent.width * 0.3
                     height: 3
                     radius: 1.5
-                    color: "#e94560"
+                    color: colors.accentAlt
                     visible: !game?.boxart
                 }
 
@@ -300,7 +303,7 @@ FocusScope {
 
                     Text {
                         text: "DESCRIPTION"
-                        color: "#888"
+                        color: colors.textMuted
                         font.pixelSize: 12
                         font.bold: true
                         font.letterSpacing: 2
@@ -313,7 +316,7 @@ FocusScope {
                             var dot = desc.indexOf(".")
                             return dot >= 0 ? desc.substring(0, dot + 1) : desc
                         }
-                        color: "#ccc"
+                        color: colors.textFaint
                         font.pixelSize: 15
                         lineHeight: 1.4
                         wrapMode: Text.WordWrap
@@ -348,7 +351,7 @@ FocusScope {
                             iconSource: "../icons/play.svg"
                             text: "PLAY"
                             primary: true
-                            accentColor: "#2ecc71"
+                            accentColor: colors.accentGreen
                             focused: buttonsArea.focusedButton === 0 && buttonsArea.activeFocus
                             onClicked: if (game) Rift.launchGame(game.id)
                         }
@@ -373,7 +376,7 @@ FocusScope {
                             text: "BACKLOG"
                             active: game?.backlog ?? false
                             focused: buttonsArea.focusedButton === 2 && buttonsArea.activeFocus
-                            accentColor: "#3498db"
+                            accentColor: colors.accentBlue
                             onClicked: {
                                 if (game) {
                                     Rift.setGameBacklog(game.id, !game.backlog)
@@ -386,7 +389,7 @@ FocusScope {
                         GameButton {
                             iconSource: "../icons/trophy.svg"
                             text: achievements ? (achievements.numAchievements + "") : ""
-                            accentColor: "#FFD700"
+                            accentColor: colors.accentGold
                             focused: buttonsArea.focusedButton === 3 && buttonsArea.activeFocus
                             visible: achievements && achievements.numAchievements > 0
                             onClicked: {
@@ -452,7 +455,7 @@ FocusScope {
                     // Section title
                     Text {
                         text: "SIMILAR GAMES"
-                        color: "#888"
+                        color: colors.textMuted
                         font.pixelSize: 12
                         font.bold: true
                         font.letterSpacing: 2
@@ -558,14 +561,14 @@ FocusScope {
                                 anchors.horizontalCenter: cover.horizontalCenter
                                 width: cover.width
                                 height: gameNameLabel.height + 8
-                                color: "#CC000000"
+                                color: colors.scrim80
                                 visible: del.ListView.isCurrentItem && similarGamesCarousel.activeFocus
 
                                 Text {
                                     id: gameNameLabel
                                     anchors.centerIn: parent
                                     text: del.modelData?.name ?? ""
-                                    color: "#fff"
+                                    color: colors.textPrimary
                                     font.pixelSize: 10
                                     font.bold: true
                                     elide: Text.ElideRight
@@ -661,7 +664,7 @@ FocusScope {
 
         Text {
             text: label
-            color: "#888"
+            color: colors.textMuted
             font.pixelSize: 9
             font.bold: true
             font.letterSpacing: 1.5
@@ -669,7 +672,7 @@ FocusScope {
 
         Text {
             text: value
-            color: "#fff"
+            color: colors.textPrimary
             font.pixelSize: 14
             font.bold: true
             elide: Text.ElideRight
@@ -686,7 +689,7 @@ FocusScope {
         property bool primary: false
         property bool active: false
         property bool focused: false
-        property color accentColor: "#e94560"
+        property color accentColor: colors.accentAlt
         property color activeAccentColor: accentColor
 
         signal clicked()
@@ -702,7 +705,7 @@ FocusScope {
         readonly property bool highlighted: focused || active || mouseArea.containsMouse
 
         // Black by default, accent fill on focus/hover/active (no border).
-        color: highlighted ? (mouseArea.containsMouse ? Qt.lighter(tone, 1.12) : tone) : "#000000"
+        color: highlighted ? (mouseArea.containsMouse ? Qt.lighter(tone, 1.12) : tone) : colors.background
 
         scale: mouseArea.pressed ? 0.95 : 1.0
 
@@ -710,7 +713,7 @@ FocusScope {
         Behavior on scale { NumberAnimation { duration: 100 } }
 
         // Text/glyph always white
-        readonly property color contentColor: "#ffffff"
+        readonly property color contentColor: colors.textPrimary
 
         Row {
             id: contentRow
