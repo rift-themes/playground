@@ -232,6 +232,11 @@ FocusScope {
                 imgB.opacity = 0
                 return
             }
+            if (incoming.status === Image.Ready
+                    && incoming.source.toString() === Qt.resolvedUrl(source).toString()) {
+                reveal(incoming, front)
+                return
+            }
             incoming.source = source
         }
 
