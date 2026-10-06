@@ -56,6 +56,22 @@ FocusScope {
         }
     }
 
+    Connections {
+        target: Rift.input
+        enabled: Rift.navigation.currentPage === "games"
+        function onPageUp() { root.switchPlatform(-1) }
+        function onPageDown() { root.switchPlatform(1) }
+    }
+
+    function switchPlatform(step) {
+        var count = Rift.platforms.count
+        if (count < 2)
+            return
+        var index = ((Rift.navigation.params.platformIndex ?? 0) + step + count) % count
+        Rift.navigation.updateBackPlatformIndex(index)
+        Rift.navigation.replace("games", { platform: Rift.platforms.get(index), platformIndex: index })
+    }
+
     // Background
     Rectangle {
         anchors.fill: parent
